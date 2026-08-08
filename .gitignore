@@ -1,0 +1,28 @@
+# Beads / Dolt files (added by bd init)
+.dolt/
+*.db
+.beads-credential-key
+
+# Rust build output
+target/
+artifacts/
+extension.wasm
+
+# Test-only .NET host output
+**/bin/
+**/obj/
+.obj/
+
+# Editor test fixtures
+.zed-test/
+
+# Node dependencies are intentionally forbidden in this repository
+node_modules/
+
+# Operating system files
+.DS_Store
+
+vendor
+
+PLAN.md
+plans

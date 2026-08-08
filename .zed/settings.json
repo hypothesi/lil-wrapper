@@ -1,0 +1,9 @@
+{
+  "lsp": {
+    "rewrap": {
+      "binary": {
+        "path": "target/debug/rewrap-lsp"
+      }
+    }
+  }
+}

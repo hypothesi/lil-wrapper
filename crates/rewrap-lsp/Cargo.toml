@@ -1,0 +1,17 @@
+[package]
+name = "rewrap-lsp"
+description = "Native Rust language server for Rewrap"
+edition.workspace = true
+license.workspace = true
+publish = false
+rust-version.workspace = true
+version.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+diff_match_patch = "=0.3.0"
+rewrap-core = { path = "../rewrap-core" }
+serde = { version = "1.0.219", features = ["derive"] }
+serde_json = "1.0.140"

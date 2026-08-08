@@ -1,0 +1,9 @@
+{
+  "imports": {
+    "../../vendor/rewrap/core/dist/dev/Main.js": "./core-module.mjs",
+    "fs": "node:fs",
+    "json5": "./json5-module.mjs",
+    "path": "node:path",
+    "vscode": "./vscode-module.mjs"
+  }
+}

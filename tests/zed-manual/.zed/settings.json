@@ -1,0 +1,29 @@
+{
+  "lsp": {
+    "rewrap": {
+      "binary": {
+        "path": "../../target/debug/rewrap-lsp"
+      },
+      "settings": {
+        "rewrap": {
+          "autoWrap": {
+            "enabled": true
+          },
+          "wrappingColumn": 20
+        }
+      }
+    }
+  },
+  "languages": {
+    "Markdown": {
+      "formatter": [
+        {
+          "language_server": {
+            "name": "rewrap"
+          }
+        }
+      ],
+      "use_on_type_format": true
+    }
+  }
+}

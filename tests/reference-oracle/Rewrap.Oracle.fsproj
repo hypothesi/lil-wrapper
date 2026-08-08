@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Program.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../vendor/rewrap/core/Core.fsproj" />
+    <ProjectReference Include="../reference-original/Rewrap.OriginalSpecs.fsproj" />
+    <PackageReference Update="FSharp.Core" Version="6.0.1" />
+  </ItemGroup>
+
+</Project>

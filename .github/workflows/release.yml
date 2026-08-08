@@ -1,0 +1,181 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_TOOLCHAIN: 1.88.0
+
+jobs:
+  verify:
+    name: Verify release source
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 8.0.x
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Install Rust toolchain and target
+        run: |
+          rustup toolchain install "$RUST_TOOLCHAIN" --profile minimal
+          rustup default "$RUST_TOOLCHAIN"
+          rustup component add clippy rustfmt
+          rustup target add wasm32-wasip2
+      - name: Check tag versions
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="${GITHUB_REF_NAME#v}"
+          cargo metadata --locked --no-deps --format-version 1 |
+            jq --exit-status --arg version "$version" 'all(.packages[].version; . == $version)'
+          test "$(awk -F '"' '/^version = / { print $2; exit }' extension/extension.toml)" = "$version"
+      - name: Run tests
+        run: cargo test --locked --workspace
+      - name: Run clippy
+        run: cargo clippy --locked --workspace --all-targets -- -D warnings
+      - name: Check formatting
+        run: cargo fmt --all -- --check
+      - name: Check Zed WebAssembly target
+        run: cargo check --locked --package rewrap-zed --target wasm32-wasip2
+
+  package-unix:
+    name: Package ${{ matrix.target }}
+    needs: verify
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-15
+            target: aarch64-apple-darwin
+          - os: macos-15-intel
+            target: x86_64-apple-darwin
+          - os: ubuntu-24.04-arm
+            target: aarch64-unknown-linux-musl
+          - os: ubuntu-24.04
+            target: x86_64-unknown-linux-musl
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install Rust toolchain and target
+        run: |
+          rustup toolchain install "$RUST_TOOLCHAIN" --profile minimal
+          rustup default "$RUST_TOOLCHAIN"
+          rustup target add "${{ matrix.target }}"
+      - name: Install musl toolchain
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install --yes musl-tools
+      - name: Build language server
+        run: cargo build --locked --release --package rewrap-lsp --target "${{ matrix.target }}"
+      - name: Package and inspect archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          asset="rewrap-lsp-${{ matrix.target }}.tar.gz"
+          mkdir -p artifacts package
+          cp "target/${{ matrix.target }}/release/rewrap-lsp" package/
+          cp LICENSE package/
+          cp extension/THIRD_PARTY_NOTICES.md package/
+          tar -czf "artifacts/$asset" -C package LICENSE THIRD_PARTY_NOTICES.md rewrap-lsp
+          actual="$(tar -tzf "artifacts/$asset" | LC_ALL=C sort)"
+          expected="$(printf '%s\n' LICENSE THIRD_PARTY_NOTICES.md rewrap-lsp | LC_ALL=C sort)"
+          test "$actual" = "$expected"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: rewrap-lsp-${{ matrix.target }}
+          path: artifacts/rewrap-lsp-${{ matrix.target }}.tar.gz
+          if-no-files-found: error
+
+  package-windows:
+    name: Package ${{ matrix.target }}
+    needs: verify
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-11-arm
+            target: aarch64-pc-windows-msvc
+          - os: windows-2025
+            target: x86_64-pc-windows-msvc
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install Rust toolchain and target
+        run: |
+          rustup toolchain install "$env:RUST_TOOLCHAIN" --profile minimal
+          rustup default "$env:RUST_TOOLCHAIN"
+          rustup target add "${{ matrix.target }}"
+      - name: Build language server
+        run: cargo build --locked --release --package rewrap-lsp --target "${{ matrix.target }}"
+      - name: Package and inspect archive
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $asset = "rewrap-lsp-${{ matrix.target }}.zip"
+          New-Item -ItemType Directory -Force artifacts, package | Out-Null
+          Copy-Item "target/${{ matrix.target }}/release/rewrap-lsp.exe" package/
+          Copy-Item LICENSE package/
+          Copy-Item extension/THIRD_PARTY_NOTICES.md package/
+          Compress-Archive -Path package/* -DestinationPath "artifacts/$asset"
+          Expand-Archive "artifacts/$asset" expanded
+          $root = (Resolve-Path expanded).Path
+          $actual = Get-ChildItem expanded -File -Recurse |
+            ForEach-Object { $_.FullName.Substring($root.Length + 1) } |
+            Sort-Object
+          $expected = @("LICENSE", "THIRD_PARTY_NOTICES.md", "rewrap-lsp.exe") | Sort-Object
+          if (Compare-Object $expected $actual) {
+            throw "Archive contents do not match the release contract"
+          }
+      - uses: actions/upload-artifact@v7
+        with:
+          name: rewrap-lsp-${{ matrix.target }}
+          path: artifacts/rewrap-lsp-${{ matrix.target }}.zip
+          if-no-files-found: error
+
+  release:
+    name: Publish GitHub release
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs:
+      - package-unix
+      - package-windows
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          path: artifacts
+          merge-multiple: true
+      - name: Verify complete artifact set
+        shell: bash
+        run: |
+          set -euo pipefail
+          expected=(
+            rewrap-lsp-aarch64-apple-darwin.tar.gz
+            rewrap-lsp-aarch64-pc-windows-msvc.zip
+            rewrap-lsp-aarch64-unknown-linux-musl.tar.gz
+            rewrap-lsp-x86_64-apple-darwin.tar.gz
+            rewrap-lsp-x86_64-pc-windows-msvc.zip
+            rewrap-lsp-x86_64-unknown-linux-musl.tar.gz
+          )
+          for asset in "${expected[@]}"; do
+            test -f "artifacts/$asset"
+          done
+          actual=(artifacts/rewrap-lsp-*)
+          test "${#actual[@]}" = "${#expected[@]}"
+          (cd artifacts && sha256sum rewrap-lsp-* > SHA256SUMS)
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: gh release create "$GITHUB_REF_NAME" artifacts/* --generate-notes --verify-tag

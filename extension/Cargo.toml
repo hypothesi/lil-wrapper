@@ -1,0 +1,17 @@
+[package]
+name = "rewrap-zed"
+description = "Zed extension for the native Rewrap language server"
+edition.workspace = true
+license.workspace = true
+publish = false
+rust-version.workspace = true
+version.workspace = true
+
+[lib]
+crate-type = ["cdylib"]
+
+[lints]
+workspace = true
+
+[dependencies]
+zed_extension_api = "=0.7.0"

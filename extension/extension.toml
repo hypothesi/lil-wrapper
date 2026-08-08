@@ -1,0 +1,175 @@
+id = "rewrap"
+name = "Rewrap"
+version = "0.1.0"
+schema_version = 1
+authors = ["Matt Luedke <mluedke.ds@gmail.com>"]
+description = "Wrap comments and text to a configurable column."
+repository = "https://github.com/yokuze/lil-wrapper"
+license = "Apache-2.0"
+
+[[capabilities]]
+kind = "download_file"
+host = "github.com"
+path = ["yokuze", "lil-wrapper", "releases", "download", "**"]
+
+[language_servers.rewrap]
+name = "Rewrap Language Server"
+code_action_kinds = ["refactor.rewrite"]
+languages = [
+  "AsciiDoc",
+  "AutoHotkey",
+  "C",
+  "C++",
+  "CMake",
+  "CSharp",
+  "Clojure",
+  "CoffeeScript",
+  "Crystal",
+  "CSS",
+  "D",
+  "Dart",
+  "Dockerfile",
+  "Elisp",
+  "Elixir",
+  "Elm",
+  "ERB",
+  "FSharp",
+  "Git Commit",
+  "Go",
+  "GraphQL",
+  "Groovy",
+  "Haskell",
+  "HCL",
+  "HTML",
+  "HTML+ERB",
+  "ini",
+  "Java",
+  "JavaScript",
+  "JS+ERB",
+  "JSON",
+  "JSON5",
+  "JSONC",
+  "Julia",
+  "LaTeX",
+  "Lean 4",
+  "LESS",
+  "Lua",
+  "Make",
+  "Markdown",
+  "MATLAB",
+  "MDX",
+  "Objective-C",
+  "Pascal",
+  "Perl",
+  "PHP",
+  "Plain Text",
+  "PowerShell",
+  "Prisma",
+  "Prolog",
+  "Properties",
+  "Proto",
+  "Pug",
+  "PureScript",
+  "Python",
+  "R",
+  "Racket",
+  "reST",
+  "Ruby",
+  "Rust",
+  "Scala",
+  "Scheme",
+  "SCSS",
+  "Shell Script",
+  "SQL",
+  "Svelte",
+  "Swift",
+  "SystemVerilog",
+  "TCL",
+  "Terraform",
+  "TOML",
+  "TSX",
+  "TypeScript",
+  "Vue.js",
+  "XML",
+  "YAML",
+  "YAML+ERB",
+]
+
+[language_servers.rewrap.language_ids]
+"AsciiDoc" = "asciidoc"
+"AutoHotkey" = "autohotkey"
+"C" = "c"
+"C++" = "cpp"
+"CMake" = "cmake"
+"CSharp" = "csharp"
+"Clojure" = "clojure"
+"CoffeeScript" = "coffeescript"
+"Crystal" = "crystal"
+"CSS" = "css"
+"D" = "d"
+"Dart" = "dart"
+"Dockerfile" = "dockerfile"
+"Elisp" = "elisp"
+"Elixir" = "elixir"
+"Elm" = "elm"
+"ERB" = "erb"
+"FSharp" = "fsharp"
+"Git Commit" = "git-commit"
+"Go" = "go"
+"GraphQL" = "graphql"
+"Groovy" = "groovy"
+"Haskell" = "haskell"
+"HCL" = "hcl"
+"HTML" = "html"
+"HTML+ERB" = "erb"
+"ini" = "ini"
+"Java" = "java"
+"JavaScript" = "javascript"
+"JS+ERB" = "javascript"
+"JSON" = "json"
+"JSON5" = "json5"
+"JSONC" = "jsonc"
+"Julia" = "julia"
+"LaTeX" = "latex"
+"Lean 4" = "lean"
+"LESS" = "less"
+"Lua" = "lua"
+"Make" = "make"
+"Markdown" = "markdown"
+"MATLAB" = "matlab"
+"MDX" = "mdx"
+"Objective-C" = "objective-c"
+"Pascal" = "pascal"
+"Perl" = "perl"
+"PHP" = "php"
+"Plain Text" = "plaintext"
+"PowerShell" = "powershell"
+"Prisma" = "prisma"
+"Prolog" = "prolog"
+"Properties" = "properties"
+"Proto" = "proto"
+"Pug" = "pug"
+"PureScript" = "purescript"
+"Python" = "python"
+"R" = "r"
+"Racket" = "scheme"
+"reST" = "rst"
+"Ruby" = "ruby"
+"Rust" = "rust"
+"Scala" = "scala"
+"Scheme" = "scheme"
+"SCSS" = "scss"
+"Shell Script" = "shellscript"
+"SQL" = "sql"
+"Svelte" = "svelte"
+"Swift" = "swift"
+"SystemVerilog" = "systemverilog"
+"TCL" = "tcl"
+"Terraform" = "terraform"
+"TOML" = "toml"
+"TSX" = "typescriptreact"
+"TypeScript" = "typescript"
+"Vue.js" = "vue"
+"XML" = "xml"
+"YAML" = "yaml"
+"YAML+ERB" = "yaml"
