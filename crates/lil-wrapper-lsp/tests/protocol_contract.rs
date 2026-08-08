@@ -1,4 +1,4 @@
-use rewrap_lsp::{INVALID_REQUEST, LanguageServer, SERVER_NOT_INITIALIZED};
+use lil_wrapper_lsp::{INVALID_REQUEST, LanguageServer, SERVER_NOT_INITIALIZED};
 use serde_json::{Value, json};
 
 fn initialize(server: &mut LanguageServer) -> Value {
@@ -109,8 +109,8 @@ fn invalid_initialize_params_do_not_advance_the_lifecycle() {
         .expect_err("null capabilities");
     let valid = initialize(&mut server);
 
-    assert_eq!(missing.code, rewrap_lsp::INVALID_PARAMS);
-    assert_eq!(null.code, rewrap_lsp::INVALID_PARAMS);
+    assert_eq!(missing.code, lil_wrapper_lsp::INVALID_PARAMS);
+    assert_eq!(null.code, lil_wrapper_lsp::INVALID_PARAMS);
     assert_eq!(valid["capabilities"]["positionEncoding"], "utf-16");
 }
 

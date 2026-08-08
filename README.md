@@ -1,7 +1,7 @@
-# Rewrap for Zed
+# Lil Wrapper for Zed
 
-Rewrap wraps comments and prose to a configurable column. This port independently implements
-Rewrap 1.16.3 in Rust and runs through a native language server. The published extension does not
+Lil Wrapper wraps comments and prose to a configurable column. It independently implements Rewrap
+1.16.3 in Rust and runs through a native language server. The published extension does not
 compile, invoke, or ship the original F# or JavaScript runtime. A test-only compatibility host
 compiles the pinned F# core to compare it directly with Rust.
 
@@ -26,39 +26,40 @@ Manual editor verification requires Zed 1.14.2 or newer. The recorded fixture is
 Build the native language server before installing the development extension:
 
 ```sh
-cargo build --package rewrap-lsp
+cargo build --package lil-wrapper-lsp
 ```
 
 Run `zed: install dev extension` in Zed and select the `extension` directory. The extension accepts
-`rewrap-lsp` from the worktree shell `PATH`.
+`lil-wrapper-lsp` from the worktree shell `PATH`.
 
 An explicit binary path can be set in Zed settings:
 
 ```json
 {
   "lsp": {
-    "rewrap": {
+    "lil-wrapper": {
       "binary": {
-        "path": "target/debug/rewrap-lsp"
+        "path": "target/debug/lil-wrapper-lsp"
       }
     }
   }
 }
 ```
 
-Release packages provide matching `rewrap-lsp` archives. Each archive contains `rewrap-lsp`, or
-`rewrap-lsp.exe` on Windows, plus `LICENSE` and `THIRD_PARTY_NOTICES.md` at its root. Until the first
+Release packages provide matching `lil-wrapper-lsp` archives. Each archive contains
+`lil-wrapper-lsp`, or `lil-wrapper-lsp.exe` on Windows, plus `LICENSE` and
+`THIRD_PARTY_NOTICES.md` at its root. Until the first
 release is published, development installations must use the workspace binary setting or put
-`rewrap-lsp` on `PATH`.
+`lil-wrapper-lsp` on `PATH`.
 
 ## Settings
 
-Pass Rewrap settings through the `rewrap` language server entry:
+Pass wrapping settings through the `lil-wrapper` language server entry:
 
 ```json
 {
   "lsp": {
-    "rewrap": {
+    "lil-wrapper": {
       "settings": {
         "rewrap": {
           "wrappingColumn": 80,
@@ -101,9 +102,9 @@ Auto-wrap also requires Zed's on-type formatter setting for each applicable lang
 
 ## Commands and keybindings
 
-Rewrap appears in the editor code-action menu with actions for the active column, each configured
-column, unwrapping, and per-document auto-wrap toggling. To use `editor: format`, select Rewrap as
-the formatter globally or for individual languages:
+Lil Wrapper appears in the editor code-action menu with actions for the active column, each
+configured column, unwrapping, and per-document auto-wrap toggling. To use `editor: format`, select
+Lil Wrapper as the formatter globally or for individual languages:
 
 ```json
 {
@@ -112,7 +113,7 @@ the formatter globally or for individual languages:
       "formatter": [
         {
           "language_server": {
-            "name": "rewrap"
+            "name": "lil-wrapper"
           }
         }
       ]
@@ -150,7 +151,7 @@ exact pinned TypeScript adapter through Deno. It does not install Node packages 
 cargo test --workspace
 cargo clippy --workspace --all-targets -- -D warnings
 cargo fmt --all -- --check
-cargo check --package rewrap-zed --target wasm32-wasip2
+cargo check --package lil-wrapper-zed --target wasm32-wasip2
 ```
 
 The release workflow uses Rust 1.88.0 to build and inspect archives for macOS, Linux, and Windows on
@@ -165,7 +166,7 @@ The vendored source can also be checked against an independent Rewrap checkout:
 
 ```sh
 REWRAP_REFERENCE_ROOT=/path/to/Rewrap \
-  cargo test --package rewrap-core pinned_reference_files_match_the_verified_upstream_tree
+  cargo test --package lil-wrapper-core pinned_reference_files_match_the_verified_upstream_tree
 ```
 
 See `COMPATIBILITY.md` for the pinned reference corpus and documented host differences. See

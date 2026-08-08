@@ -1,6 +1,6 @@
 use std::panic::{AssertUnwindSafe, catch_unwind};
 
-use rewrap_core::{
+use lil_wrapper_core::{
     ColumnState, CustomMarkers, DocState, File, Position, RewrapRequest, Selection, Settings,
     language_name_for_file, languages, maybe_auto_wrap, rewrap, str_width,
 };

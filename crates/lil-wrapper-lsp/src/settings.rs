@@ -1,4 +1,4 @@
-use rewrap_core::{CustomMarkers, Settings};
+use lil_wrapper_core::{CustomMarkers, Settings};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 

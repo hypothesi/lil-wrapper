@@ -1,5 +1,5 @@
 use diff_match_patch::Dmp;
-use rewrap_core::{Position, Selection};
+use lil_wrapper_core::{Position, Selection};
 
 #[must_use]
 pub fn remap_selections(

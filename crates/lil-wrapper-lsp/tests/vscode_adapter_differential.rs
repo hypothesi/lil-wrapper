@@ -3,8 +3,8 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::sync::OnceLock;
 
-use rewrap_core::{Position, Selection, Settings};
-use rewrap_lsp::{Configuration, LanguageServer, remap_selections};
+use lil_wrapper_core::{Position, Selection, Settings};
+use lil_wrapper_lsp::{Configuration, LanguageServer, remap_selections};
 use serde_json::{Map, Value, json};
 
 static ORACLE: OnceLock<Value> = OnceLock::new();
@@ -317,7 +317,7 @@ fn direct_command_paths_match_the_original_core_requests() {
             }),
         )
         .expect_err("command without editor range");
-    assert_eq!(missing.code, rewrap_lsp::INVALID_PARAMS);
+    assert_eq!(missing.code, lil_wrapper_lsp::INVALID_PARAMS);
 
     let range = json!({
         "start": {"line": 2, "character": 4},

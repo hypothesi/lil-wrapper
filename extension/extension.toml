@@ -1,19 +1,19 @@
-id = "rewrap"
-name = "Rewrap"
+id = "lil-wrapper"
+name = "Lil Wrapper"
 version = "0.1.0"
 schema_version = 1
 authors = ["Matt Luedke <mluedke.ds@gmail.com>"]
 description = "Wrap comments and text to a configurable column."
-repository = "https://github.com/yokuze/lil-wrapper"
+repository = "https://github.com/hypothesi/lil-wrapper"
 license = "Apache-2.0"
 
 [[capabilities]]
 kind = "download_file"
 host = "github.com"
-path = ["yokuze", "lil-wrapper", "releases", "download", "**"]
+path = ["hypothesi", "lil-wrapper", "releases", "download", "**"]
 
-[language_servers.rewrap]
-name = "Rewrap Language Server"
+[language_servers.lil-wrapper]
+name = "Lil Wrapper Language Server"
 code_action_kinds = ["refactor.rewrite"]
 languages = [
   "AsciiDoc",
@@ -95,7 +95,7 @@ languages = [
   "YAML+ERB",
 ]
 
-[language_servers.rewrap.language_ids]
+[language_servers.lil-wrapper.language_ids]
 "AsciiDoc" = "asciidoc"
 "AutoHotkey" = "autohotkey"
 "C" = "c"

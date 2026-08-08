@@ -1,6 +1,6 @@
 mod support;
 
-use rewrap_core::{CustomMarkers, File, RewrapRequest, rewrap};
+use lil_wrapper_core::{CustomMarkers, File, RewrapRequest, rewrap};
 use support::specs::{SpecCase, load_corpus};
 
 #[test]
@@ -45,7 +45,7 @@ fn native_rust_core_passes_every_expectation_executed_by_the_original_runner() {
     );
 }
 
-fn apply_edit(input: &[String], edit: &rewrap_core::Edit) -> Vec<String> {
+fn apply_edit(input: &[String], edit: &lil_wrapper_core::Edit) -> Vec<String> {
     if edit.is_empty() {
         return input.to_vec();
     }

@@ -1,6 +1,6 @@
 [package]
-name = "rewrap-zed"
-description = "Zed extension for the native Rewrap language server"
+name = "lil-wrapper-zed"
+description = "Zed extension for the native Lil Wrapper language server"
 edition.workspace = true
 license.workspace = true
 publish = false

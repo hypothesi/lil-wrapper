@@ -1,7 +1,7 @@
 use crate::document::{ContentChange, Document, LspPosition, LspRange};
 use crate::remap_selections;
 use crate::settings::Configuration;
-use rewrap_core::{DocState, Edit, File, RewrapRequest, Selection, maybe_auto_wrap, rewrap};
+use lil_wrapper_core::{DocState, Edit, File, RewrapRequest, Selection, maybe_auto_wrap, rewrap};
 use serde::Deserialize;
 use serde_json::{Map, Value, json};
 use std::collections::{HashMap, HashSet};
@@ -435,7 +435,7 @@ impl LanguageServer {
                     "commands": [COMMAND_REWRAP, COMMAND_REWRAP_AT, COMMAND_TOGGLE_AUTO_WRAP]
                 }
             },
-            "serverInfo": {"name": "rewrap-lsp", "version": env!("CARGO_PKG_VERSION")}
+            "serverInfo": {"name": "lil-wrapper-lsp", "version": env!("CARGO_PKG_VERSION")}
         }))
     }
 

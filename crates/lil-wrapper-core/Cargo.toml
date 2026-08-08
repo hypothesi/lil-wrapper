@@ -1,6 +1,6 @@
 [package]
-name = "rewrap-core"
-description = "Native Rust implementation of Rewrap's hard-wrapping behavior"
+name = "lil-wrapper-core"
+description = "Core hard-wrapping behavior for Lil Wrapper"
 edition.workspace = true
 license.workspace = true
 publish = false

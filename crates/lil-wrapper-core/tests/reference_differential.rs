@@ -7,7 +7,7 @@ use std::path::{Path, PathBuf};
 use std::process::{self, Command, Stdio};
 use std::sync::Mutex;
 
-use rewrap_core::{
+use lil_wrapper_core::{
     ColumnState, CustomMarkers, DocState, File, Position, RewrapRequest, Selection, Settings,
     language_name_for_file, languages, maybe_auto_wrap, rewrap, str_width,
 };
@@ -761,7 +761,7 @@ fn settings_json(settings: Settings) -> Value {
     })
 }
 
-fn edit_json(id: &str, edit: &rewrap_core::Edit) -> Value {
+fn edit_json(id: &str, edit: &lil_wrapper_core::Edit) -> Value {
     json!({
         "id": id,
         "startLine": edit.start_line,

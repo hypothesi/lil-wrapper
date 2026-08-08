@@ -1,8 +1,8 @@
 {
   "lsp": {
-    "rewrap": {
+    "lil-wrapper": {
       "binary": {
-        "path": "../../target/debug/rewrap-lsp"
+        "path": "../../target/debug/lil-wrapper-lsp"
       },
       "settings": {
         "rewrap": {
@@ -19,7 +19,7 @@
       "formatter": [
         {
           "language_server": {
-            "name": "rewrap"
+            "name": "lil-wrapper"
           }
         }
       ],

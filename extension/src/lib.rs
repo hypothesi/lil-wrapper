@@ -4,11 +4,11 @@ use std::path::{Path, PathBuf};
 use zed::settings::LspSettings;
 use zed_extension_api as zed;
 
-const BINARY_NAME: &str = "rewrap-lsp";
-const RELEASE_REPOSITORY: &str = "yokuze/lil-wrapper";
-const RELEASE_DIRECTORY_PREFIX: &str = "rewrap-lsp-";
+const BINARY_NAME: &str = "lil-wrapper-lsp";
+const RELEASE_REPOSITORY: &str = "hypothesi/lil-wrapper";
+const RELEASE_DIRECTORY_PREFIX: &str = "lil-wrapper-lsp-";
 
-struct RewrapExtension {
+struct LilWrapperExtension {
     cached_binary: Option<PathBuf>,
 }
 
@@ -19,7 +19,7 @@ struct PlatformAsset {
     file_type: zed::DownloadedFileType,
 }
 
-impl RewrapExtension {
+impl LilWrapperExtension {
     fn resolve_binary(
         &mut self,
         language_server_id: &zed::LanguageServerId,
@@ -50,7 +50,7 @@ impl RewrapExtension {
                 Self::find_installed_binary(platform.binary_name)
                     .map_err(|_| {
                         format!(
-                            "Rewrap language server is not on PATH and no downloaded release is available. Set lsp.rewrap.binary.path for a local build. Release lookup failed: {release_error}"
+                            "Lil Wrapper language server is not on PATH and no downloaded release is available. Set lsp.lil-wrapper.binary.path for a local build. Release lookup failed: {release_error}"
                         )
                     })
             });
@@ -104,7 +104,7 @@ impl RewrapExtension {
             .find(|asset| asset.name == platform.archive_name)
             .ok_or_else(|| {
                 format!(
-                    "Rewrap release {} has no {} asset",
+                    "Lil Wrapper release {} has no {} asset",
                     release.version, platform.archive_name
                 )
             })?;
@@ -130,7 +130,7 @@ impl RewrapExtension {
     fn cache(&mut self, path: PathBuf) -> zed::Result<PathBuf> {
         if !path.is_file() {
             return Err(format!(
-                "Rewrap language server not found at {}",
+                "Lil Wrapper language server not found at {}",
                 path.display()
             ));
         }
@@ -157,7 +157,7 @@ fn find_installed_binary_in(directory: &Path, binary_name: &str) -> zed::Result<
     versions
         .pop()
         .map(|(_, binary)| binary)
-        .ok_or_else(|| "no downloaded Rewrap language server is available".to_owned())
+        .ok_or_else(|| "no downloaded Lil Wrapper language server is available".to_owned())
 }
 
 fn preferred_local_binary(
@@ -171,7 +171,7 @@ fn preferred_local_binary(
     })
 }
 
-impl zed::Extension for RewrapExtension {
+impl zed::Extension for LilWrapperExtension {
     fn new() -> Self {
         Self {
             cached_binary: None,
@@ -233,33 +233,33 @@ fn platform_asset(os: zed::Os, architecture: zed::Architecture) -> zed::Result<P
 
     match (os, architecture) {
         (Os::Mac, Architecture::Aarch64) => Ok(PlatformAsset {
-            archive_name: "rewrap-lsp-aarch64-apple-darwin.tar.gz",
+            archive_name: "lil-wrapper-lsp-aarch64-apple-darwin.tar.gz",
             binary_name: BINARY_NAME,
             file_type: DownloadedFileType::GzipTar,
         }),
         (Os::Mac, Architecture::X8664) => Ok(PlatformAsset {
-            archive_name: "rewrap-lsp-x86_64-apple-darwin.tar.gz",
+            archive_name: "lil-wrapper-lsp-x86_64-apple-darwin.tar.gz",
             binary_name: BINARY_NAME,
             file_type: DownloadedFileType::GzipTar,
         }),
         (Os::Linux, Architecture::Aarch64) => Ok(PlatformAsset {
-            archive_name: "rewrap-lsp-aarch64-unknown-linux-musl.tar.gz",
+            archive_name: "lil-wrapper-lsp-aarch64-unknown-linux-musl.tar.gz",
             binary_name: BINARY_NAME,
             file_type: DownloadedFileType::GzipTar,
         }),
         (Os::Linux, Architecture::X8664) => Ok(PlatformAsset {
-            archive_name: "rewrap-lsp-x86_64-unknown-linux-musl.tar.gz",
+            archive_name: "lil-wrapper-lsp-x86_64-unknown-linux-musl.tar.gz",
             binary_name: BINARY_NAME,
             file_type: DownloadedFileType::GzipTar,
         }),
         (Os::Windows, Architecture::Aarch64) => Ok(PlatformAsset {
-            archive_name: "rewrap-lsp-aarch64-pc-windows-msvc.zip",
-            binary_name: "rewrap-lsp.exe",
+            archive_name: "lil-wrapper-lsp-aarch64-pc-windows-msvc.zip",
+            binary_name: "lil-wrapper-lsp.exe",
             file_type: DownloadedFileType::Zip,
         }),
         (Os::Windows, Architecture::X8664) => Ok(PlatformAsset {
-            archive_name: "rewrap-lsp-x86_64-pc-windows-msvc.zip",
-            binary_name: "rewrap-lsp.exe",
+            archive_name: "lil-wrapper-lsp-x86_64-pc-windows-msvc.zip",
+            binary_name: "lil-wrapper-lsp.exe",
             file_type: DownloadedFileType::Zip,
         }),
         (_, Architecture::X86) => Err("32-bit x86 is not supported".to_owned()),
@@ -279,7 +279,7 @@ fn version_sort_key(version: &str) -> Vec<u64> {
         .collect()
 }
 
-zed::register_extension!(RewrapExtension);
+zed::register_extension!(LilWrapperExtension);
 
 #[cfg(test)]
 mod tests {
@@ -291,43 +291,43 @@ mod tests {
             (
                 zed::Os::Mac,
                 zed::Architecture::Aarch64,
-                "rewrap-lsp-aarch64-apple-darwin.tar.gz",
+                "lil-wrapper-lsp-aarch64-apple-darwin.tar.gz",
                 BINARY_NAME,
                 zed::DownloadedFileType::GzipTar,
             ),
             (
                 zed::Os::Mac,
                 zed::Architecture::X8664,
-                "rewrap-lsp-x86_64-apple-darwin.tar.gz",
+                "lil-wrapper-lsp-x86_64-apple-darwin.tar.gz",
                 BINARY_NAME,
                 zed::DownloadedFileType::GzipTar,
             ),
             (
                 zed::Os::Linux,
                 zed::Architecture::Aarch64,
-                "rewrap-lsp-aarch64-unknown-linux-musl.tar.gz",
+                "lil-wrapper-lsp-aarch64-unknown-linux-musl.tar.gz",
                 BINARY_NAME,
                 zed::DownloadedFileType::GzipTar,
             ),
             (
                 zed::Os::Linux,
                 zed::Architecture::X8664,
-                "rewrap-lsp-x86_64-unknown-linux-musl.tar.gz",
+                "lil-wrapper-lsp-x86_64-unknown-linux-musl.tar.gz",
                 BINARY_NAME,
                 zed::DownloadedFileType::GzipTar,
             ),
             (
                 zed::Os::Windows,
                 zed::Architecture::Aarch64,
-                "rewrap-lsp-aarch64-pc-windows-msvc.zip",
-                "rewrap-lsp.exe",
+                "lil-wrapper-lsp-aarch64-pc-windows-msvc.zip",
+                "lil-wrapper-lsp.exe",
                 zed::DownloadedFileType::Zip,
             ),
             (
                 zed::Os::Windows,
                 zed::Architecture::X8664,
-                "rewrap-lsp-x86_64-pc-windows-msvc.zip",
-                "rewrap-lsp.exe",
+                "lil-wrapper-lsp-x86_64-pc-windows-msvc.zip",
+                "lil-wrapper-lsp.exe",
                 zed::DownloadedFileType::Zip,
             ),
         ];
@@ -358,7 +358,8 @@ mod tests {
 
     #[test]
     fn finds_the_latest_downloaded_release_binary() {
-        let root = std::env::temp_dir().join(format!("rewrap-zed-test-{}", std::process::id()));
+        let root =
+            std::env::temp_dir().join(format!("lil-wrapper-zed-test-{}", std::process::id()));
         let _ = fs::remove_dir_all(&root);
         for version in ["v0.9.9", "v0.10.0"] {
             let directory = root.join(format!("{RELEASE_DIRECTORY_PREFIX}{version}"));
@@ -378,14 +379,17 @@ mod tests {
     #[test]
     fn prefers_worktree_path_and_ignores_stale_cached_binaries() {
         let root =
-            std::env::temp_dir().join(format!("rewrap-zed-path-test-{}", std::process::id()));
-        let cached = root.join("cached-rewrap-lsp");
+            std::env::temp_dir().join(format!("lil-wrapper-zed-path-test-{}", std::process::id()));
+        let cached = root.join("cached-lil-wrapper-lsp");
         fs::create_dir_all(&root).expect("create local binary fixture");
         fs::write(&cached, []).expect("create cached binary fixture");
 
         assert_eq!(
-            preferred_local_binary(Some("/worktree/bin/rewrap-lsp".to_owned()), Some(&cached)),
-            Some(PathBuf::from("/worktree/bin/rewrap-lsp"))
+            preferred_local_binary(
+                Some("/worktree/bin/lil-wrapper-lsp".to_owned()),
+                Some(&cached)
+            ),
+            Some(PathBuf::from("/worktree/bin/lil-wrapper-lsp"))
         );
         fs::remove_file(&cached).expect("make cached binary stale");
         assert_eq!(preferred_local_binary(None, Some(&cached)), None);

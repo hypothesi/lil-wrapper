@@ -47,7 +47,7 @@ jobs:
       - name: Check formatting
         run: cargo fmt --all -- --check
       - name: Check Zed WebAssembly target
-        run: cargo check --locked --package rewrap-zed --target wasm32-wasip2
+        run: cargo check --locked --package lil-wrapper-zed --target wasm32-wasip2
 
   package-unix:
     name: Package ${{ matrix.target }}
@@ -76,24 +76,24 @@ jobs:
         if: runner.os == 'Linux'
         run: sudo apt-get update && sudo apt-get install --yes musl-tools
       - name: Build language server
-        run: cargo build --locked --release --package rewrap-lsp --target "${{ matrix.target }}"
+        run: cargo build --locked --release --package lil-wrapper-lsp --target "${{ matrix.target }}"
       - name: Package and inspect archive
         shell: bash
         run: |
           set -euo pipefail
-          asset="rewrap-lsp-${{ matrix.target }}.tar.gz"
+          asset="lil-wrapper-lsp-${{ matrix.target }}.tar.gz"
           mkdir -p artifacts package
-          cp "target/${{ matrix.target }}/release/rewrap-lsp" package/
+          cp "target/${{ matrix.target }}/release/lil-wrapper-lsp" package/
           cp LICENSE package/
           cp extension/THIRD_PARTY_NOTICES.md package/
-          tar -czf "artifacts/$asset" -C package LICENSE THIRD_PARTY_NOTICES.md rewrap-lsp
+          tar -czf "artifacts/$asset" -C package LICENSE THIRD_PARTY_NOTICES.md lil-wrapper-lsp
           actual="$(tar -tzf "artifacts/$asset" | LC_ALL=C sort)"
-          expected="$(printf '%s\n' LICENSE THIRD_PARTY_NOTICES.md rewrap-lsp | LC_ALL=C sort)"
+          expected="$(printf '%s\n' LICENSE THIRD_PARTY_NOTICES.md lil-wrapper-lsp | LC_ALL=C sort)"
           test "$actual" = "$expected"
       - uses: actions/upload-artifact@v7
         with:
-          name: rewrap-lsp-${{ matrix.target }}
-          path: artifacts/rewrap-lsp-${{ matrix.target }}.tar.gz
+          name: lil-wrapper-lsp-${{ matrix.target }}
+          path: artifacts/lil-wrapper-lsp-${{ matrix.target }}.tar.gz
           if-no-files-found: error
 
   package-windows:
@@ -116,14 +116,14 @@ jobs:
           rustup default "$env:RUST_TOOLCHAIN"
           rustup target add "${{ matrix.target }}"
       - name: Build language server
-        run: cargo build --locked --release --package rewrap-lsp --target "${{ matrix.target }}"
+        run: cargo build --locked --release --package lil-wrapper-lsp --target "${{ matrix.target }}"
       - name: Package and inspect archive
         shell: pwsh
         run: |
           $ErrorActionPreference = "Stop"
-          $asset = "rewrap-lsp-${{ matrix.target }}.zip"
+          $asset = "lil-wrapper-lsp-${{ matrix.target }}.zip"
           New-Item -ItemType Directory -Force artifacts, package | Out-Null
-          Copy-Item "target/${{ matrix.target }}/release/rewrap-lsp.exe" package/
+          Copy-Item "target/${{ matrix.target }}/release/lil-wrapper-lsp.exe" package/
           Copy-Item LICENSE package/
           Copy-Item extension/THIRD_PARTY_NOTICES.md package/
           Compress-Archive -Path package/* -DestinationPath "artifacts/$asset"
@@ -132,14 +132,14 @@ jobs:
           $actual = Get-ChildItem expanded -File -Recurse |
             ForEach-Object { $_.FullName.Substring($root.Length + 1) } |
             Sort-Object
-          $expected = @("LICENSE", "THIRD_PARTY_NOTICES.md", "rewrap-lsp.exe") | Sort-Object
+          $expected = @("LICENSE", "THIRD_PARTY_NOTICES.md", "lil-wrapper-lsp.exe") | Sort-Object
           if (Compare-Object $expected $actual) {
             throw "Archive contents do not match the release contract"
           }
       - uses: actions/upload-artifact@v7
         with:
-          name: rewrap-lsp-${{ matrix.target }}
-          path: artifacts/rewrap-lsp-${{ matrix.target }}.zip
+          name: lil-wrapper-lsp-${{ matrix.target }}
+          path: artifacts/lil-wrapper-lsp-${{ matrix.target }}.zip
           if-no-files-found: error
 
   release:
@@ -161,19 +161,19 @@ jobs:
         run: |
           set -euo pipefail
           expected=(
-            rewrap-lsp-aarch64-apple-darwin.tar.gz
-            rewrap-lsp-aarch64-pc-windows-msvc.zip
-            rewrap-lsp-aarch64-unknown-linux-musl.tar.gz
-            rewrap-lsp-x86_64-apple-darwin.tar.gz
-            rewrap-lsp-x86_64-pc-windows-msvc.zip
-            rewrap-lsp-x86_64-unknown-linux-musl.tar.gz
+            lil-wrapper-lsp-aarch64-apple-darwin.tar.gz
+            lil-wrapper-lsp-aarch64-pc-windows-msvc.zip
+            lil-wrapper-lsp-aarch64-unknown-linux-musl.tar.gz
+            lil-wrapper-lsp-x86_64-apple-darwin.tar.gz
+            lil-wrapper-lsp-x86_64-pc-windows-msvc.zip
+            lil-wrapper-lsp-x86_64-unknown-linux-musl.tar.gz
           )
           for asset in "${expected[@]}"; do
             test -f "artifacts/$asset"
           done
-          actual=(artifacts/rewrap-lsp-*)
+          actual=(artifacts/lil-wrapper-lsp-*)
           test "${#actual[@]}" = "${#expected[@]}"
-          (cd artifacts && sha256sum rewrap-lsp-* > SHA256SUMS)
+          (cd artifacts && sha256sum lil-wrapper-lsp-* > SHA256SUMS)
       - name: Create release
         env:
           GH_TOKEN: ${{ github.token }}

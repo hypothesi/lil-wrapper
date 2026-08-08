@@ -1,5 +1,5 @@
 [workspace]
-members = ["crates/rewrap-core", "crates/rewrap-lsp", "extension"]
+members = ["crates/lil-wrapper-core", "crates/lil-wrapper-lsp", "extension"]
 resolver = "2"
 
 [workspace.package]

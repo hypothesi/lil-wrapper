@@ -1,4 +1,4 @@
-use rewrap_lsp::{RawSettings, Ruler, resolve_settings};
+use lil_wrapper_lsp::{RawSettings, Ruler, resolve_settings};
 
 fn raw() -> RawSettings {
     RawSettings {

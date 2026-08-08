@@ -2,8 +2,8 @@ use std::fmt;
 use std::fs;
 use std::path::{Path, PathBuf};
 
+use lil_wrapper_core::{Position, Selection, Settings};
 use regex::Regex;
-use rewrap_core::{Position, Selection, Settings};
 use walkdir::WalkDir;
 
 const SPEC_ROOT: &str = "../../vendor/rewrap/docs/specs";

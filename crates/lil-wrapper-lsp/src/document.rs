@@ -1,5 +1,5 @@
 use crate::{CONTENT_MODIFIED, INVALID_PARAMS, RpcError};
-use rewrap_core::Position;
+use lil_wrapper_core::Position;
 use serde::Deserialize;
 
 #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq)]

@@ -350,6 +350,32 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "09edd9e8b54e49e587e4f6295a7d29c3ea94d469cb40ab8ca70b288248a81db2"
 
 [[package]]
+name = "lil-wrapper-core"
+version = "0.1.0"
+dependencies = [
+ "regex",
+ "serde_json",
+ "walkdir",
+]
+
+[[package]]
+name = "lil-wrapper-lsp"
+version = "0.1.0"
+dependencies = [
+ "diff_match_patch",
+ "lil-wrapper-core",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "lil-wrapper-zed"
+version = "0.1.0"
+dependencies = [
+ "zed_extension_api",
+]
+
+[[package]]
 name = "litemap"
 version = "0.8.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -460,32 +486,6 @@ name = "regex-syntax"
 version = "0.8.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d6f6ff9a378485b298a5286656da665ba74413d36db0979633275d2e708145d4"
-
-[[package]]
-name = "rewrap-core"
-version = "0.1.0"
-dependencies = [
- "regex",
- "serde_json",
- "walkdir",
-]
-
-[[package]]
-name = "rewrap-lsp"
-version = "0.1.0"
-dependencies = [
- "diff_match_patch",
- "rewrap-core",
- "serde",
- "serde_json",
-]
-
-[[package]]
-name = "rewrap-zed"
-version = "0.1.0"
-dependencies = [
- "zed_extension_api",
-]
 
 [[package]]
 name = "same-file"

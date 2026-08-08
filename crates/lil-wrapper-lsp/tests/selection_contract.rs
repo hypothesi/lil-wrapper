@@ -1,5 +1,5 @@
-use rewrap_core::{Position, Selection};
-use rewrap_lsp::remap_selections;
+use lil_wrapper_core::{Position, Selection};
+use lil_wrapper_lsp::remap_selections;
 
 fn position(line: usize, character: usize) -> Position {
     Position { line, character }

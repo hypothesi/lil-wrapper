@@ -9,28 +9,28 @@ implementations directly.
 
 | Reference behavior | Rust contract |
 | --- | --- |
-| Pinned F#, TypeScript, manifest, license, and specification inventory and bytes | `pinned_reference_files_match_the_verified_upstream_tree` in `crates/rewrap-core/tests/reference_differential.rs` |
-| Original F# runner passes all 470 executable expectations | `crates/rewrap-core/tests/reference_differential.rs` |
-| Rust passes the same 470 executable expectations | `crates/rewrap-core/tests/spec_compatibility.rs` |
-| Original F# and Rust parsers produce identical records for all 482 cases | `crates/rewrap-core/tests/reference_differential.rs` |
-| F# and Rust return equivalent edits for all 482 parsed cases | `crates/rewrap-core/tests/reference_differential.rs` |
-| Wrapping, auto-wrap, width, language, marker, ruler, and every source-comment marker family match F# | `crates/rewrap-core/tests/reference_differential.rs` |
-| Spec grammar, settings, selections, tabs, and corpus inventory | `crates/rewrap-core/tests/spec_harness.rs` |
-| Additional uncovered core behavior and safety regressions | `crates/rewrap-core/tests/reference_regressions.rs` |
-| UTF-16 visual width and language lookup | `crates/rewrap-core/tests/core_contract.rs` |
-| Ruler state and consecutive-wrap cycling | `crates/rewrap-core/tests/core_contract.rs` |
-| Auto-wrap eligibility and cursor result | `crates/rewrap-core/tests/core_contract.rs` |
-| Custom line and block comment markers | `crates/rewrap-core/tests/core_contract.rs` |
-| Wrapping-column precedence and setting validation | `crates/rewrap-lsp/tests/settings_contract.rs` |
-| Selection remapping for versioned, editor-owned edits | `crates/rewrap-lsp/tests/selection_contract.rs` |
-| LSP lifecycle and advertised capabilities | `crates/rewrap-lsp/tests/protocol_contract.rs` |
-| Incremental UTF-16 synchronization and versioned edits | `crates/rewrap-lsp/tests/protocol_contract.rs` |
-| CRLF preservation and runtime configuration | `crates/rewrap-lsp/tests/protocol_contract.rs` |
-| Wrap, custom-column, unwrap, and per-document auto-wrap actions | `crates/rewrap-lsp/tests/protocol_contract.rs` |
-| Exact VS Code manifest commands and adapter-to-core command requests | `crates/rewrap-lsp/tests/vscode_adapter_differential.rs` |
-| Standard wrap, custom-column, unwrap, cancellation, range, edit, and failed-edit command paths | `crates/rewrap-lsp/tests/vscode_adapter_differential.rs` |
-| VS Code settings, custom-language cache, and `fast-diff` selection remapping | `crates/rewrap-lsp/tests/vscode_adapter_differential.rs` |
-| VS Code auto-wrap event gates, configuration transitions, and document toggle state | `crates/rewrap-lsp/tests/vscode_adapter_differential.rs` |
+| Pinned F#, TypeScript, manifest, license, and specification inventory and bytes | `pinned_reference_files_match_the_verified_upstream_tree` in `crates/lil-wrapper-core/tests/reference_differential.rs` |
+| Original F# runner passes all 470 executable expectations | `crates/lil-wrapper-core/tests/reference_differential.rs` |
+| Rust passes the same 470 executable expectations | `crates/lil-wrapper-core/tests/spec_compatibility.rs` |
+| Original F# and Rust parsers produce identical records for all 482 cases | `crates/lil-wrapper-core/tests/reference_differential.rs` |
+| F# and Rust return equivalent edits for all 482 parsed cases | `crates/lil-wrapper-core/tests/reference_differential.rs` |
+| Wrapping, auto-wrap, width, language, marker, ruler, and every source-comment marker family match F# | `crates/lil-wrapper-core/tests/reference_differential.rs` |
+| Spec grammar, settings, selections, tabs, and corpus inventory | `crates/lil-wrapper-core/tests/spec_harness.rs` |
+| Additional uncovered core behavior and safety regressions | `crates/lil-wrapper-core/tests/reference_regressions.rs` |
+| UTF-16 visual width and language lookup | `crates/lil-wrapper-core/tests/core_contract.rs` |
+| Ruler state and consecutive-wrap cycling | `crates/lil-wrapper-core/tests/core_contract.rs` |
+| Auto-wrap eligibility and cursor result | `crates/lil-wrapper-core/tests/core_contract.rs` |
+| Custom line and block comment markers | `crates/lil-wrapper-core/tests/core_contract.rs` |
+| Wrapping-column precedence and setting validation | `crates/lil-wrapper-lsp/tests/settings_contract.rs` |
+| Selection remapping for versioned, editor-owned edits | `crates/lil-wrapper-lsp/tests/selection_contract.rs` |
+| LSP lifecycle and advertised capabilities | `crates/lil-wrapper-lsp/tests/protocol_contract.rs` |
+| Incremental UTF-16 synchronization and versioned edits | `crates/lil-wrapper-lsp/tests/protocol_contract.rs` |
+| CRLF preservation and runtime configuration | `crates/lil-wrapper-lsp/tests/protocol_contract.rs` |
+| Wrap, custom-column, unwrap, and per-document auto-wrap actions | `crates/lil-wrapper-lsp/tests/protocol_contract.rs` |
+| Exact VS Code manifest commands and adapter-to-core command requests | `crates/lil-wrapper-lsp/tests/vscode_adapter_differential.rs` |
+| Standard wrap, custom-column, unwrap, cancellation, range, edit, and failed-edit command paths | `crates/lil-wrapper-lsp/tests/vscode_adapter_differential.rs` |
+| VS Code settings, custom-language cache, and `fast-diff` selection remapping | `crates/lil-wrapper-lsp/tests/vscode_adapter_differential.rs` |
+| VS Code auto-wrap event gates, configuration transitions, and document toggle state | `crates/lil-wrapper-lsp/tests/vscode_adapter_differential.rs` |
 | macOS, Linux, and Windows release asset filename mapping | `extension/src/lib.rs` unit tests |
 
 The corpus contains 482 parsed cases across 58 Markdown files: 474 primary cases and 8 `-or-`
@@ -65,7 +65,7 @@ when Zed opens those files as Plain Text, Rewrap can still infer supported file 
 
 The Zed host boundary is verified separately and does not count as automated compatibility proof.
 Zed 1.14.2 compiled the final Rust extension to WebAssembly and loaded it as a development
-extension. It started `target/debug/rewrap-lsp` through the workspace binary setting. Document,
+extension. It started `target/debug/lil-wrapper-lsp` through the workspace binary setting. Document,
 range, and multiple-selection formatting passed. Undo, unwrap, auto-wrap, and the per-document
 toggle also passed. `ZED_MANUAL_TEST.md` contains the complete editor test record.
 
