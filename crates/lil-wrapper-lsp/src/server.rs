@@ -1,7 +1,7 @@
 use crate::document::{ContentChange, Document, LspPosition, LspRange};
 use crate::remap_selections;
 use crate::settings::Configuration;
-use lil_wrapper_core::{DocState, Edit, File, RewrapRequest, Selection, maybe_auto_wrap, rewrap};
+use lil_wrapper_core::{DocState, Edit, File, Selection, WrapRequest, maybe_auto_wrap, wrap};
 use serde::Deserialize;
 use serde_json::{Map, Value, json};
 use std::collections::{HashMap, HashSet};
@@ -15,9 +15,9 @@ pub const INVALID_PARAMS: i64 = -32_602;
 pub const INTERNAL_ERROR: i64 = -32_603;
 const REQUEST_FAILED: i64 = -32_803;
 
-const COMMAND_REWRAP: &str = "rewrap.rewrapComment";
-const COMMAND_REWRAP_AT: &str = "rewrap.rewrapCommentAt";
-const COMMAND_TOGGLE_AUTO_WRAP: &str = "rewrap.toggleAutoWrap";
+const COMMAND_WRAP: &str = "lil-wrapper.wrapComment";
+const COMMAND_WRAP_AT: &str = "lil-wrapper.wrapCommentAt";
+const COMMAND_TOGGLE_AUTO_WRAP: &str = "lil-wrapper.toggleAutoWrap";
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct RpcError {
@@ -299,9 +299,9 @@ impl LanguageServer {
                     )
                 })?;
                 let empty = Value::Object(Map::new());
-                let rewrap = values.first().unwrap_or(&empty);
+                let section = values.first().unwrap_or(&empty);
                 let editor = values.get(1).unwrap_or(&empty);
-                let configuration = Configuration::from_sections(rewrap, editor);
+                let configuration = Configuration::from_sections(section, editor);
                 match scope {
                     ConfigurationScope::Global => self.configuration = configuration,
                     ConfigurationScope::Document { uri, instance } => {
@@ -432,7 +432,7 @@ impl LanguageServer {
                 },
                 "codeActionProvider": true,
                 "executeCommandProvider": {
-                    "commands": [COMMAND_REWRAP, COMMAND_REWRAP_AT, COMMAND_TOGGLE_AUTO_WRAP]
+                    "commands": [COMMAND_WRAP, COMMAND_WRAP_AT, COMMAND_TOGGLE_AUTO_WRAP]
                 }
             },
             "serverInfo": {"name": "lil-wrapper-lsp", "version": env!("CARGO_PKG_VERSION")}
@@ -576,7 +576,7 @@ impl LanguageServer {
         let Some((new_text, insertion_start)) = on_type_change(&document, &parsed) else {
             return Ok(json!([]));
         };
-        let request = RewrapRequest {
+        let request = WrapRequest {
             file: core_file(&document, &configuration),
             settings,
             selections: Vec::new(),
@@ -604,7 +604,7 @@ impl LanguageServer {
         let unwrap_edit = self.wrap(&uri, Some(range), ColumnChoice::Custom(0), None)?;
         let columns = self.configuration_for(&uri).columns();
         let mut actions = vec![json!({
-            "title": "Rewrap Comment / Text",
+            "title": "Lil Wrapper: Wrap Comment / Text",
             "kind": "refactor.rewrite",
             "edit": self.workspace_edit(
                 &uri,
@@ -618,7 +618,7 @@ impl LanguageServer {
             }
             let edit = self.wrap(&uri, Some(range), ColumnChoice::Custom(column), None)?;
             actions.push(json!({
-                "title": format!("Rewrap at Column {column}"),
+                "title": format!("Lil Wrapper: Wrap at Column {column}"),
                 "kind": "refactor.rewrite",
                 "edit": self.workspace_edit(
                     &uri,
@@ -680,16 +680,16 @@ impl LanguageServer {
         if target.range.is_none() {
             return Err(RpcError::new(
                 INVALID_PARAMS,
-                "rewrap commands require an active editor range",
+                "lil-wrapper commands require an active editor range",
             ));
         }
 
         let choice = match command {
-            COMMAND_REWRAP => ColumnChoice::Cycle,
-            COMMAND_REWRAP_AT => ColumnChoice::Custom(target.column.ok_or_else(|| {
+            COMMAND_WRAP => ColumnChoice::Cycle,
+            COMMAND_WRAP_AT => ColumnChoice::Custom(target.column.ok_or_else(|| {
                 RpcError::new(
                     INVALID_PARAMS,
-                    "rewrap.rewrapCommentAt requires a numeric column argument",
+                    "lil-wrapper.wrapCommentAt requires a numeric column argument",
                 )
             })?),
             _ => {
@@ -709,7 +709,7 @@ impl LanguageServer {
             .flatten();
         let key = self.queue_request(
             "workspace/applyEdit",
-            json!({"label": "Rewrap Comment / Text", "edit": workspace_edit}),
+            json!({"label": "Lil Wrapper: Wrap Comment / Text", "edit": workspace_edit}),
             PendingRequest::ApplyEdit {
                 deferred: None,
                 cycle,
@@ -752,7 +752,7 @@ impl LanguageServer {
             ),
             ColumnChoice::Custom(column) => (column, column),
         };
-        let request = RewrapRequest {
+        let request = WrapRequest {
             file: core_file(&document, &configuration),
             settings: configuration
                 .settings(column, tab_width)
@@ -760,7 +760,7 @@ impl LanguageServer {
             selections,
             lines: document.lines(),
         };
-        let edit = rewrap(&request);
+        let edit = wrap(&request);
         if choice == ColumnChoice::Cycle {
             if let Some(protocol_edit) = edit_to_text_edit(&document, &edit) {
                 let end_line = usize::try_from(edit.end_line).map_err(|_| {
@@ -867,7 +867,7 @@ impl LanguageServer {
         };
         self.queue_request(
             "workspace/configuration",
-            json!({"items": [item("rewrap"), item("editor")]}),
+            json!({"items": [item("lil-wrapper"), item("editor")]}),
             PendingRequest::Configuration {
                 generation: self.configuration_generation,
                 scope,
@@ -1252,7 +1252,7 @@ mod tests {
         server
             .notify(
                 "workspace/didChangeConfiguration",
-                json!({"settings": {"rewrap": {
+                json!({"settings": {"lil-wrapper": {
                     "wrappingColumn": 8,
                     "autoWrap": {"enabled": true}
                 }}}),
@@ -1284,7 +1284,7 @@ mod tests {
             .notify(
                 "workspace/didChangeConfiguration",
                 json!({"settings": {
-                    "rewrap": {"wrappingColumn": 0},
+                    "lil-wrapper": {"wrappingColumn": 0},
                     "editor": {"rulers": [8, {"column": 12}], "wordWrapColumn": 80}
                 }}),
             )
@@ -1348,7 +1348,7 @@ mod tests {
             .request(
                 "workspace/executeCommand",
                 json!({
-                    "command": "rewrap.toggleAutoWrap",
+                    "command": "lil-wrapper.toggleAutoWrap",
                     "arguments": [{"uri": uri}]
                 }),
             )
@@ -1508,7 +1508,7 @@ mod tests {
             .request(
                 "workspace/executeCommand",
                 json!({
-                    "command": "rewrap.rewrapCommentAt",
+                    "command": "lil-wrapper.wrapCommentAt",
                     "arguments": [{
                         "uri": uri,
                         "column": 8,
@@ -1602,7 +1602,7 @@ mod tests {
         server
             .notify(
                 "workspace/didChangeConfiguration",
-                json!({"settings": {"rewrap": {"wrappingColumn": 10}}}),
+                json!({"settings": {"lil-wrapper": {"wrappingColumn": 10}}}),
             )
             .expect("configuration change");
         let new_requests = server.take_outbound_requests();
@@ -1719,7 +1719,7 @@ mod tests {
             .notify(
                 "workspace/didChangeConfiguration",
                 json!({"settings": {
-                    "rewrap": {"wrappingColumn": 0},
+                    "lil-wrapper": {"wrappingColumn": 0},
                     "editor": {"rulers": [0], "wordWrapColumn": 8}
                 }}),
             )
@@ -1731,7 +1731,7 @@ mod tests {
             .notify(
                 "workspace/didChangeConfiguration",
                 json!({"settings": {
-                    "rewrap": {"wrappingColumn": 0},
+                    "lil-wrapper": {"wrappingColumn": 0},
                     "editor": {"rulers": [{"column": 0}], "wordWrapColumn": 8}
                 }}),
             )
@@ -1745,13 +1745,13 @@ mod tests {
                 .as_array()
                 .expect("numeric action array")
                 .iter()
-                .any(|action| action["title"] == "Rewrap at Column 8")
+                .any(|action| action["title"] == "Lil Wrapper: Wrap at Column 8")
         );
         let zero = detailed
             .as_array()
             .expect("detailed action array")
             .iter()
-            .find(|action| action["title"] == "Rewrap at Column 0")
+            .find(|action| action["title"] == "Lil Wrapper: Wrap at Column 0")
             .expect("unbounded ruler action");
         assert_eq!(
             zero["edit"]["documentChanges"][0]["edits"][0]["newText"],
@@ -1827,7 +1827,7 @@ mod tests {
                 .as_array()
                 .expect("action array")
                 .iter()
-                .any(|action| action["title"] == "Rewrap at Column 0")
+                .any(|action| action["title"] == "Lil Wrapper: Wrap at Column 0")
         );
     }
 

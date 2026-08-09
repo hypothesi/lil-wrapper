@@ -1,6 +1,6 @@
 use crate::model::{Block, BlockKind, ParsedLine};
 use crate::wrapping::wrap_lines;
-use crate::{Edit, RewrapRequest, Selection};
+use crate::{Edit, Selection, WrapRequest};
 
 #[derive(Clone, Copy, Debug)]
 struct LineRange {
@@ -126,7 +126,7 @@ fn selected_segments(
     segments
 }
 
-pub(crate) fn render_selected(request: &RewrapRequest, blocks: &[Block]) -> Edit {
+pub(crate) fn render_selected(request: &WrapRequest, blocks: &[Block]) -> Edit {
     let select_all = request.selections.is_empty();
     let ranges = if select_all {
         vec![LineRange {

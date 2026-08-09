@@ -2,7 +2,7 @@ use regex::Regex;
 
 use super::comments::parse_source;
 use crate::model::{Block, ParsedLine, protect_spaces_in_ranges};
-use crate::{CustomMarkers, File, RewrapRequest};
+use crate::{CustomMarkers, File, WrapRequest};
 
 const PRESERVE_ENVIRONMENTS: &[&str] = &[
     "align",
@@ -100,8 +100,8 @@ fn is_block_command(value: &str) -> bool {
         || command(value).is_some_and(|command| matches!(command.name, "[" | "begin" | "item"))
 }
 
-fn parse_comments(request: &RewrapRequest, lines: &[ParsedLine], start: usize) -> Vec<Block> {
-    let comment_request = RewrapRequest {
+fn parse_comments(request: &WrapRequest, lines: &[ParsedLine], start: usize) -> Vec<Block> {
+    let comment_request = WrapRequest {
         file: File {
             language: "latex-comment".to_owned(),
             path: String::new(),
@@ -127,7 +127,7 @@ fn parse_comments(request: &RewrapRequest, lines: &[ParsedLine], start: usize) -
     blocks
 }
 
-pub(crate) fn parse_latex(request: &RewrapRequest, lines: &[ParsedLine]) -> Vec<Block> {
+pub(crate) fn parse_latex(request: &WrapRequest, lines: &[ParsedLine]) -> Vec<Block> {
     let end_of_line_comment = Regex::new(r"[^\\]%").expect("valid LaTeX comment regex");
     let mut blocks = Vec::new();
     let mut index = 0;

@@ -10,7 +10,7 @@ use super::sgml::parse_xmldoc;
 use crate::language::canonical_language_name;
 use crate::model::{Block, ParsedLine, protect_spaces_in_ranges};
 use crate::width::{leading_width, split_at_visual_width, str_width, tabs_to_spaces};
-use crate::{CustomMarkers, RewrapRequest, Settings};
+use crate::{CustomMarkers, Settings, WrapRequest};
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum Flavor {
@@ -102,7 +102,7 @@ fn javadoc_block(flavor: Flavor) -> CommentDef {
     block(r"/\*[*!]", r"\*/", "*", " * ", flavor)
 }
 
-fn definitions(request: &RewrapRequest) -> Vec<CommentDef> {
+fn definitions(request: &WrapRequest) -> Vec<CommentDef> {
     let markdown = Flavor::Markdown;
     if let Some(language) = canonical_language_name(&request.file) {
         return language_definitions(&language.to_ascii_lowercase());
@@ -126,7 +126,7 @@ fn definitions(request: &RewrapRequest) -> Vec<CommentDef> {
     definitions
 }
 
-fn cached_custom_markers(request: &RewrapRequest) -> CustomMarkers {
+fn cached_custom_markers(request: &WrapRequest) -> CustomMarkers {
     static CUSTOM_LANGUAGES: OnceLock<Mutex<HashMap<String, CustomMarkers>>> = OnceLock::new();
 
     let markers = &request.file.custom_markers;
@@ -912,7 +912,7 @@ fn consume_block_prefix(line: &ParsedLine, end: usize, settings: Settings) -> Pa
     ParsedLine::new(prefix, line.content[end..].to_owned())
 }
 
-pub(crate) fn parse_source(request: &RewrapRequest, lines: &[ParsedLine]) -> Vec<Block> {
+pub(crate) fn parse_source(request: &WrapRequest, lines: &[ParsedLine]) -> Vec<Block> {
     let definitions = definitions(request);
     let yaml = canonical_language_name(&request.file).is_some_and(|name| name == "YAML");
     let mut blocks = Vec::new();

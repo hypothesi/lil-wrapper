@@ -57,9 +57,9 @@ you plan to use:
 | Client capability | Enables |
 | --- | --- |
 | `workspace.configuration` | Per-workspace and per-document configuration requests. |
-| `workspace.applyEdit` | The `rewrap.rewrapComment` and `rewrap.rewrapCommentAt` commands. |
+| `workspace.applyEdit` | The `lil-wrapper.wrapComment` and `lil-wrapper.wrapCommentAt` commands. |
 | `workspace.workspaceEdit.documentChanges` | Versioned `documentChanges` edits; otherwise the server returns a `changes` map. |
-| `textDocument.codeAction.codeActionLiteralSupport` for `refactor.rewrite` | Rewrap code actions. |
+| `textDocument.codeAction.codeActionLiteralSupport` for `refactor.rewrite` | Wrap code actions. |
 
 After `initialized`, reply to the server's `workspace/configuration` requests when configuration
 support is advertised. Send `textDocument/didOpen` before formatting a document, keep it current
@@ -82,13 +82,13 @@ overrides configuration and must be a positive integer.
 
 Supply configuration in `initialize.initializationOptions`,
 `workspace/didChangeConfiguration`, or replies to `workspace/configuration`. The outer `settings`
-object is optional. When replying to `workspace/configuration`, return the `rewrap` and `editor`
+object is optional. When replying to `workspace/configuration`, return the `lil-wrapper` and `editor`
 objects as the first and second values of the result array, respectively.
 
 ```json
 {
   "settings": {
-    "rewrap": {
+    "lil-wrapper": {
       "wrappingColumn": 80,
       "tabWidth": 4,
       "doubleSentenceSpacing": false,
@@ -113,27 +113,27 @@ objects as the first and second values of the result array, respectively.
 
 | Setting | Default | Behavior |
 | --- | --- | --- |
-| `rewrap.wrappingColumn` | unset | A nonzero value is the sole wrapping column. Set `0` to use rulers or `wordWrapColumn`. |
-| `editor.rulers` | `[]` | Numeric values or `{ "column": 80 }` values. They provide direct rewrap actions and are cycled by format commands. |
+| `lil-wrapper.wrappingColumn` | unset | A nonzero value is the sole wrapping column. Set `0` to use rulers or `wordWrapColumn`. |
+| `editor.rulers` | `[]` | Numeric values or `{ "column": 80 }` values. They provide direct wrap actions and are cycled by format commands. |
 | `editor.wordWrapColumn` | `80` | Fallback column when no eligible ruler exists. |
-| `editor.tabSize` | `4` | Preferred tab width. `rewrap.tabWidth` is used only when this is absent. |
-| `rewrap.doubleSentenceSpacing` | `false` | Preserves sentence spacing during wrapping. |
-| `rewrap.reformat` | `false` | Reformat existing breaks where supported. |
-| `rewrap.wholeComment` | `true` | Wrap a complete comment block when touched by the selection. |
-| `rewrap.autoWrap.enabled` | `false` | Enables on-type formatting. The legacy `autoWrapEnabled` key is also accepted. |
-| `rewrap.customMarkers` | empty | Adds `lineComment` and/or `blockComment` markers for unsupported languages. |
+| `editor.tabSize` | `4` | Preferred tab width. `lil-wrapper.tabWidth` is used only when this is absent. |
+| `lil-wrapper.doubleSentenceSpacing` | `false` | Preserves sentence spacing during wrapping. |
+| `lil-wrapper.reformat` | `false` | Reformat existing breaks where supported. |
+| `lil-wrapper.wholeComment` | `true` | Wrap a complete comment block when touched by the selection. |
+| `lil-wrapper.autoWrap.enabled` | `false` | Enables on-type formatting. The legacy `autoWrapEnabled` key is also accepted. |
+| `lil-wrapper.customMarkers` | empty | Adds `lineComment` and/or `blockComment` markers for unsupported languages. |
 
 `wrappingColumn` has priority over `rulers`, which have priority over `wordWrapColumn`. A resolved
 column of `0` unwraps selected content. On consecutive successful format operations for the same
-selection, the server rotates through configured rulers; a code action named `Rewrap Comment /
+selection, the server rotates through configured rulers; a code action named `Lil Wrapper: Wrap Comment /
 Text` uses the current column without advancing that cycle.
 
 ## Code Actions And Commands
 
 When the client supports literal `refactor.rewrite` code actions, a code-action request returns:
 
-- `Rewrap Comment / Text` at the current column.
-- `Rewrap at Column N` for each distinct configured column.
+- `Lil Wrapper: Wrap Comment / Text` at the current column.
+- `Lil Wrapper: Wrap at Column N` for each distinct configured column.
 - `Unwrap Comment / Text` at column `0`.
 - `Toggle Auto-Wrap for Current Document`.
 
@@ -141,15 +141,15 @@ The server also advertises these commands:
 
 | Command | Requirements | Result |
 | --- | --- | --- |
-| `rewrap.rewrapComment` | An open document, active range, and `workspace.applyEdit`. | Applies a wrap at the current or next ruler column. |
-| `rewrap.rewrapCommentAt` | The same, plus a numeric column. | Applies a wrap at that column; `0` unwraps. |
-| `rewrap.toggleAutoWrap` | A resolvable document URI. | Toggles auto-wrap only for that document and returns `{ "enabled": boolean }`. |
+| `lil-wrapper.wrapComment` | An open document, active range, and `workspace.applyEdit`. | Applies a wrap at the current or next ruler column. |
+| `lil-wrapper.wrapCommentAt` | The same, plus a numeric column. | Applies a wrap at that column; `0` unwraps. |
+| `lil-wrapper.toggleAutoWrap` | A resolvable document URI. | Toggles auto-wrap only for that document and returns `{ "enabled": boolean }`. |
 
 Use an object argument for custom commands:
 
 ```json
 {
-  "command": "rewrap.rewrapCommentAt",
+  "command": "lil-wrapper.wrapCommentAt",
   "arguments": [
     {
       "uri": "file:///workspace/notes.md",
@@ -163,8 +163,8 @@ Use an object argument for custom commands:
 }
 ```
 
-For the two rewrap commands, respond to the server's `workspace/applyEdit` request. The server uses
-the `Rewrap Comment / Text` label and reports a command error if the client rejects the edit.
+For the two wrap commands, respond to the server's `workspace/applyEdit` request. The server uses
+the `Lil Wrapper: Wrap Comment / Text` label and reports a command error if the client rejects the edit.
 
 ## Language IDs
 

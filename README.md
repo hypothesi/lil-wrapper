@@ -8,9 +8,10 @@ Protocol (LSP) server, and a Zed extension.
 
 | Component | Use it when you want to... |
 | --- | --- |
-| [Core library](crates/lil-wrapper-core/README.md) | Rewrap text from Rust code. |
+| [Core library](crates/lil-wrapper-core/README.md) | Wrap text from Rust code. |
 | [LSP server](crates/lil-wrapper-lsp/README.md) | Integrate wrapping into an editor or LSP client. |
 | [Zed extension](extension/README.md) | Configure and use Lil Wrapper in Zed. |
+| [CLI](crates/lil-wrapper-cli/README.md) | Wrap a file from a terminal or script. |
 
 ## Development
 

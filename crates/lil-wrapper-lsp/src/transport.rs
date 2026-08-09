@@ -316,7 +316,7 @@ mod tests {
             json!({
                 "jsonrpc": "2.0", "id": 20, "method": "workspace/executeCommand",
                 "params": {
-                    "command": "rewrap.rewrapCommentAt",
+                    "command": "lil-wrapper.wrapCommentAt",
                     "arguments": [{
                         "uri": uri,
                         "column": 8,

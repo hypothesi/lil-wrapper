@@ -67,7 +67,7 @@ impl Edit {
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct RewrapRequest {
+pub struct WrapRequest {
     pub file: File,
     pub settings: Settings,
     pub selections: Vec<Selection>,
@@ -81,9 +81,9 @@ pub struct DocState {
     pub selections: Vec<Selection>,
 }
 
-/// Rewrap text according to the reference behavior.
+/// Wrap text according to the reference behavior.
 #[must_use]
-pub fn rewrap(request: &RewrapRequest) -> Edit {
+pub fn wrap(request: &WrapRequest) -> Edit {
     if request.lines.is_empty() {
         return Edit::empty_with_selections(&request.selections);
     }
@@ -93,7 +93,7 @@ pub fn rewrap(request: &RewrapRequest) -> Edit {
 }
 
 #[must_use]
-pub fn maybe_auto_wrap(request: &RewrapRequest, new_text: &str, position: Position) -> Edit {
+pub fn maybe_auto_wrap(request: &WrapRequest, new_text: &str, position: Position) -> Edit {
     if new_text.is_empty()
         || request.settings.column < 1
         || !new_text.chars().all(char::is_whitespace)
@@ -135,7 +135,7 @@ pub fn maybe_auto_wrap(request: &RewrapRequest, new_text: &str, position: Positi
             character: line_end,
         },
     }];
-    let mut edit = rewrap(&auto_request);
+    let mut edit = wrap(&auto_request);
     edit.selections = vec![Selection {
         anchor: Position {
             line: position.line + usize::from(enter_pressed),

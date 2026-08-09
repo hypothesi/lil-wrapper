@@ -1,0 +1,7 @@
+[
+  {
+    "label": "Lil Wrapper: wrap file",
+    "command": "target/debug/lil-wrapper-cli wrap --column 80 --write \"$ZED_FILE\"",
+    "reveal": "never"
+  }
+]

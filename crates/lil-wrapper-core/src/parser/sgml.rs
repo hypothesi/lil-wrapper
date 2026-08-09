@@ -2,7 +2,7 @@ use regex::Regex;
 
 use super::comments::{parse_html_comment, parse_source};
 use crate::model::{Block, ParsedLine, protect_spaces_in_ranges};
-use crate::{CustomMarkers, File, RewrapRequest, Settings};
+use crate::{CustomMarkers, File, Settings, WrapRequest};
 
 const XMLDOC_BLOCK_TAGS: &[&str] = &[
     "code",
@@ -143,12 +143,12 @@ pub(crate) fn parse_xmldoc(lines: &[ParsedLine], start: usize, settings: Setting
 }
 
 fn embedded_source(
-    request: &RewrapRequest,
+    request: &WrapRequest,
     lines: &[ParsedLine],
     start: usize,
     language: &str,
 ) -> Vec<Block> {
-    let embedded_request = RewrapRequest {
+    let embedded_request = WrapRequest {
         file: File {
             language: language.to_owned(),
             path: String::new(),
@@ -171,7 +171,7 @@ fn embedded_source(
     blocks
 }
 
-pub(crate) fn parse_html(request: &RewrapRequest, lines: &[ParsedLine]) -> Vec<Block> {
+pub(crate) fn parse_html(request: &WrapRequest, lines: &[ParsedLine]) -> Vec<Block> {
     let mut blocks = Vec::new();
     let mut index = 0;
     let mut comment_id = 0;

@@ -1,6 +1,6 @@
 mod support;
 
-use lil_wrapper_core::{CustomMarkers, File, RewrapRequest, rewrap};
+use lil_wrapper_core::{CustomMarkers, File, WrapRequest, wrap};
 use support::specs::{SpecCase, load_corpus};
 
 #[test]
@@ -17,7 +17,7 @@ fn native_rust_core_passes_every_expectation_executed_by_the_original_runner() {
     let mut failures = Vec::new();
 
     for case in cases {
-        let edit = rewrap(&RewrapRequest {
+        let edit = wrap(&WrapRequest {
             file: File {
                 language: case.language.clone(),
                 path: String::new(),

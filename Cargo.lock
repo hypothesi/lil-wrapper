@@ -350,6 +350,13 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "09edd9e8b54e49e587e4f6295a7d29c3ea94d469cb40ab8ca70b288248a81db2"
 
 [[package]]
+name = "lil-wrapper-cli"
+version = "0.1.0"
+dependencies = [
+ "lil-wrapper-core",
+]
+
+[[package]]
 name = "lil-wrapper-core"
 version = "0.1.0"
 dependencies = [

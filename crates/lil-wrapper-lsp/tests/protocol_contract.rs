@@ -43,7 +43,7 @@ fn open(server: &mut LanguageServer, uri: &str, language: &str, version: i64, te
 }
 
 #[test]
-fn advertises_every_zed_compatible_rewrap_operation() {
+fn advertises_every_zed_compatible_wrap_operation() {
     let result = initialize(&mut LanguageServer::new());
     let capabilities = &result["capabilities"];
 
@@ -59,9 +59,9 @@ fn advertises_every_zed_compatible_rewrap_operation() {
     assert_eq!(
         capabilities["executeCommandProvider"]["commands"],
         json!([
-            "rewrap.rewrapComment",
-            "rewrap.rewrapCommentAt",
-            "rewrap.toggleAutoWrap"
+            "lil-wrapper.wrapComment",
+            "lil-wrapper.wrapCommentAt",
+            "lil-wrapper.toggleAutoWrap"
         ])
     );
 }
@@ -128,7 +128,7 @@ fn formats_a_document_with_runtime_settings_and_preserves_crlf() {
     server
         .notify(
             "workspace/didChangeConfiguration",
-            json!({"settings": {"rewrap": {"wrappingColumn": 8}}}),
+            json!({"settings": {"lil-wrapper": {"wrappingColumn": 8}}}),
         )
         .expect("configuration accepted");
 
@@ -184,7 +184,7 @@ fn applies_incremental_utf16_changes_before_formatting() {
         )
         .expect("code action response");
 
-    assert_eq!(actions[0]["title"], "Rewrap Comment / Text");
+    assert_eq!(actions[0]["title"], "Lil Wrapper: Wrap Comment / Text");
     assert_eq!(
         actions[0]["edit"]["documentChanges"][0]["textDocument"]["version"],
         2
@@ -206,7 +206,7 @@ fn exposes_direct_configured_column_unwrap_and_auto_wrap_actions() {
         .notify(
             "workspace/didChangeConfiguration",
             json!({"settings": {
-                "rewrap": {"wrappingColumn": 0},
+                "lil-wrapper": {"wrappingColumn": 0},
                 "editor": {"rulers": [8, {"column": 12}], "wordWrapColumn": 80}
             }}),
         )
@@ -229,17 +229,17 @@ fn exposes_direct_configured_column_unwrap_and_auto_wrap_actions() {
         .map(|action| action["title"].as_str().expect("action title"))
         .collect::<Vec<_>>();
 
-    assert!(titles.contains(&"Rewrap Comment / Text"));
-    assert!(titles.contains(&"Rewrap at Column 8"));
-    assert!(titles.contains(&"Rewrap at Column 12"));
-    assert!(!titles.contains(&"Rewrap at Column..."));
+    assert!(titles.contains(&"Lil Wrapper: Wrap Comment / Text"));
+    assert!(titles.contains(&"Lil Wrapper: Wrap at Column 8"));
+    assert!(titles.contains(&"Lil Wrapper: Wrap at Column 12"));
+    assert!(!titles.contains(&"Lil Wrapper: Wrap at Column..."));
     assert!(titles.contains(&"Unwrap Comment / Text"));
     assert!(titles.contains(&"Toggle Auto-Wrap for Current Document"));
     let column_twelve = actions
         .as_array()
         .expect("action array")
         .iter()
-        .find(|action| action["title"] == "Rewrap at Column 12")
+        .find(|action| action["title"] == "Lil Wrapper: Wrap at Column 12")
         .expect("column 12 action");
     assert_eq!(
         column_twelve["edit"]["documentChanges"][0]["edits"][0]["newText"],
@@ -299,7 +299,7 @@ fn adapts_or_rejects_edit_paths_from_client_capabilities() {
         .request(
             "workspace/executeCommand",
             json!({
-                "command": "rewrap.rewrapCommentAt",
+                "command": "lil-wrapper.wrapCommentAt",
                 "arguments": [{"uri": uri, "column": 8}]
             }),
         )
@@ -339,5 +339,5 @@ fn requests_scoped_configuration_when_the_client_supports_it() {
     let outbound = server.take_outbound_requests();
     assert_eq!(outbound.len(), 1);
     assert_eq!(outbound[0]["method"], "workspace/configuration");
-    assert_eq!(outbound[0]["params"]["items"][0]["section"], "rewrap");
+    assert_eq!(outbound[0]["params"]["items"][0]["section"], "lil-wrapper");
 }

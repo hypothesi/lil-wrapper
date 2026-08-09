@@ -1,8 +1,8 @@
 use std::panic::{AssertUnwindSafe, catch_unwind};
 
 use lil_wrapper_core::{
-    ColumnState, CustomMarkers, DocState, File, Position, RewrapRequest, Selection, Settings,
-    language_name_for_file, languages, maybe_auto_wrap, rewrap, str_width,
+    ColumnState, CustomMarkers, DocState, File, Position, Selection, Settings, WrapRequest,
+    language_name_for_file, languages, maybe_auto_wrap, str_width, wrap,
 };
 
 fn settings(column: usize) -> Settings {
@@ -15,8 +15,8 @@ fn settings(column: usize) -> Settings {
     }
 }
 
-fn request(language: &str, path: &str, column: usize, lines: &[&str]) -> RewrapRequest {
-    RewrapRequest {
+fn request(language: &str, path: &str, column: usize, lines: &[&str]) -> WrapRequest {
+    WrapRequest {
         file: File {
             language: language.to_owned(),
             path: path.to_owned(),
@@ -35,8 +35,8 @@ fn cursor(line: usize, character: usize) -> Selection {
     }
 }
 
-fn apply(request: &RewrapRequest) -> Vec<String> {
-    let edit = rewrap(request);
+fn apply(request: &WrapRequest) -> Vec<String> {
+    let edit = wrap(request);
     if edit.is_empty() {
         return request.lines.clone();
     }
@@ -305,9 +305,9 @@ fn every_reference_source_language_has_its_comment_processor() {
 
 #[test]
 fn source_language_marker_sets_do_not_expand_beyond_the_reference() {
-    assert!(rewrap(&request("rust", "", 10, &["/* one two three */"])).is_empty());
-    assert!(rewrap(&request("protobuf", "", 10, &["/* one two three */"])).is_empty());
-    assert!(rewrap(&request("pascal", "", 10, &["{$one two three}"])).is_empty());
+    assert!(wrap(&request("rust", "", 10, &["/* one two three */"])).is_empty());
+    assert!(wrap(&request("protobuf", "", 10, &["/* one two three */"])).is_empty());
+    assert!(wrap(&request("pascal", "", 10, &["{$one two three}"])).is_empty());
 }
 
 #[test]
@@ -342,7 +342,7 @@ fn top_level_markdown_does_not_apply_legacy_blockquote_reformatting() {
     let mut case = request("markdown", "", 6, &["* a", "  >b", " >c"]);
     case.settings.reformat = true;
 
-    let edit = rewrap(&case);
+    let edit = wrap(&case);
     assert_eq!(edit.start_line, 1);
     assert_eq!(edit.end_line, 2);
     assert_eq!(edit.lines, ["  >b c"]);
@@ -382,7 +382,7 @@ fn no_op_wraps_preserve_the_input_selections() {
     let mut case = request("plaintext", "", 80, &["short"]);
     case.selections = vec![cursor(0, 2)];
 
-    let edit = rewrap(&case);
+    let edit = wrap(&case);
     assert!(edit.is_empty());
     assert_eq!(edit.selections, case.selections);
 }
@@ -392,7 +392,7 @@ fn known_languages_ignore_custom_markers() {
     let mut case = request("rust", "", 12, &["# one two three four"]);
     case.file.custom_markers.line = "#".to_owned();
 
-    assert!(rewrap(&case).is_empty());
+    assert!(wrap(&case).is_empty());
 }
 
 #[test]
@@ -470,6 +470,68 @@ fn markdown_indentation_counts_utf16_units_not_utf8_bytes() {
         apply(&request("markdown", "", 10, &["　　one two three"])),
         ["　　one", "　　two", "　　three"]
     );
+}
+
+#[test]
+fn markdown_code_blocks_are_never_wrapped() {
+    let cases = [
+        ["```rust", "let result = one + two + three + four;", "```"].as_slice(),
+        ["~~~text", "one two three four five six", "~~~"].as_slice(),
+        [
+            "- ```rust",
+            "  let result = one + two + three + four;",
+            "  ```",
+        ]
+        .as_slice(),
+        [
+            "> ```rust",
+            "> let result = one + two + three + four;",
+            "> ```",
+        ]
+        .as_slice(),
+        ["\tlet result = one + two + three + four;"].as_slice(),
+    ];
+
+    for lines in cases {
+        assert!(
+            wrap(&request("markdown", "", 12, lines)).is_empty(),
+            "{lines:?}"
+        );
+    }
+
+    let mut selected = request(
+        "markdown",
+        "",
+        12,
+        &["```rust", "let result = one + two + three + four;", "```"],
+    );
+    selected.selections = vec![cursor(1, 4)];
+    assert!(wrap(&selected).is_empty());
+}
+
+#[test]
+fn markdown_tables_are_never_wrapped() {
+    let cases = [
+        ["| Name |", "| --- |", "| Alice |"].as_slice(),
+        ["| A | B |", "| - | - |", "| 1 | 2 |"].as_slice(),
+        ["| :---: |", "| --- |", "| c |"].as_slice(),
+        ["Name | Age", "--- | ---", "Alice | 30"].as_slice(),
+        ["| Escaped \\| pipe | Value |", "| --- | --- |", "| a | b |"].as_slice(),
+        [
+            "> | quoted | table |",
+            "> | --- | --- |",
+            "> | inside | blockquote |",
+        ]
+        .as_slice(),
+        ["- | item | table |", "  | --- | --- |", "  | in | list |"].as_slice(),
+    ];
+
+    for lines in cases {
+        assert!(
+            wrap(&request("markdown", "", 12, lines)).is_empty(),
+            "{lines:?}"
+        );
+    }
 }
 
 #[test]

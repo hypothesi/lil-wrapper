@@ -8,8 +8,8 @@ use std::process::{self, Command, Stdio};
 use std::sync::Mutex;
 
 use lil_wrapper_core::{
-    ColumnState, CustomMarkers, DocState, File, Position, RewrapRequest, Selection, Settings,
-    language_name_for_file, languages, maybe_auto_wrap, rewrap, str_width,
+    ColumnState, CustomMarkers, DocState, File, Position, Selection, Settings, WrapRequest,
+    language_name_for_file, languages, maybe_auto_wrap, str_width, wrap,
 };
 use serde_json::{Value, json};
 use support::specs::{SpecCase, load_corpus};
@@ -141,7 +141,7 @@ fn rust_matches_the_original_core_for_every_reference_expectation() {
     let mut failures = Vec::new();
     for (case, original_edit) in cases.into_iter().zip(original) {
         let original_edit = normalize_empty_edit(original_edit.clone());
-        let rust_edit = rewrap(&RewrapRequest {
+        let rust_edit = wrap(&WrapRequest {
             file: File {
                 language: case.language.clone(),
                 path: String::new(),
@@ -253,7 +253,7 @@ fn exported_core_contracts_match_the_original_runtime() {
         expected.push(json!({"id": id, "value": str_width(tab_width, text)}));
     }
 
-    let column_path = "/tmp/rewrap-reference-differential-columns";
+    let column_path = "/tmp/lil-wrapper-reference-differential-columns";
     requests.push(json!({
         "id": "columns",
         "operation": "columnScenario",
@@ -426,7 +426,7 @@ fn exported_core_contracts_match_the_original_runtime() {
         ),
     ] {
         requests.push(request_json(id, &parser_request));
-        expected.push(edit_json(id, &rewrap(&parser_request)));
+        expected.push(edit_json(id, &wrap(&parser_request)));
     }
 
     let original = run_oracle(&Value::Array(requests));
@@ -447,7 +447,7 @@ fn push_custom_marker_contracts(requests: &mut Vec<Value>, expected: &mut Vec<Va
         },
     ] {
         requests.push(request_json(id, &custom_request));
-        expected.push(edit_json(id, &rewrap(&custom_request)));
+        expected.push(edit_json(id, &wrap(&custom_request)));
     }
 }
 
@@ -645,11 +645,11 @@ fn push_source_parser_contracts(requests: &mut Vec<Value>, expected: &mut Vec<Va
     ] {
         let parser_request = request(language, 14, &[source]);
         assert!(
-            !rewrap(&parser_request).is_empty(),
+            !wrap(&parser_request).is_empty(),
             "inactive parser fixture: {id}"
         );
         requests.push(request_json(id, &parser_request));
-        expected.push(edit_json(id, &rewrap(&parser_request)));
+        expected.push(edit_json(id, &wrap(&parser_request)));
     }
 }
 
@@ -707,8 +707,8 @@ fn corpus_case_json(case: &SpecCase) -> Value {
     })
 }
 
-fn request(language: &str, column: usize, lines: &[&str]) -> RewrapRequest {
-    RewrapRequest {
+fn request(language: &str, column: usize, lines: &[&str]) -> WrapRequest {
+    WrapRequest {
         file: File {
             language: language.to_owned(),
             path: String::new(),
@@ -733,7 +733,7 @@ fn cursor(line: usize, character: usize) -> Selection {
     }
 }
 
-fn request_json(id: &str, request: &RewrapRequest) -> Value {
+fn request_json(id: &str, request: &WrapRequest) -> Value {
     json!({
         "id": id,
         "language": request.file.language,

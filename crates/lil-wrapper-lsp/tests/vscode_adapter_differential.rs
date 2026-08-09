@@ -22,8 +22,8 @@ fn production_settings_match_the_original_vscode_adapter() {
         let values = case["input"]["values"]
             .as_object()
             .expect("settings input values");
-        let (rewrap, editor) = settings_sections(values);
-        let configuration = Configuration::from_sections(&rewrap, &editor);
+        let (section, editor) = settings_sections(values);
+        let configuration = Configuration::from_sections(&section, &editor);
         let tab_size = case["input"]["tabSize"]
             .as_f64()
             .expect("settings tab size");
@@ -102,7 +102,20 @@ fn commands_and_manifest_match_the_original_vscode_adapter() {
         .expect("advertised commands")
         .clone();
     advertised.sort_by_key(Value::to_string);
-    assert_eq!(advertised, *original_commands);
+    let mut rebranded = original_commands
+        .iter()
+        .map(|command| {
+            let command = command.as_str().expect("original command name");
+            let name = command.strip_prefix("rewrap.").unwrap_or(command).replacen(
+                "rewrapComment",
+                "wrapComment",
+                1,
+            );
+            Value::String(format!("lil-wrapper.{name}"))
+        })
+        .collect::<Vec<_>>();
+    rebranded.sort_by_key(Value::to_string);
+    assert_eq!(advertised, rebranded);
 
     let calls = oracle()["commands"]["rewrapCalls"]
         .as_array()
@@ -312,7 +325,7 @@ fn direct_command_paths_match_the_original_core_requests() {
         .request(
             "workspace/executeCommand",
             json!({
-                "command": "rewrap.rewrapComment",
+                "command": "lil-wrapper.wrapComment",
                 "arguments": [{"uri": uri}]
             }),
         )
@@ -327,7 +340,7 @@ fn direct_command_paths_match_the_original_core_requests() {
         .notify(
             "workspace/didChangeConfiguration",
             json!({"settings": {
-                "rewrap": {"wrappingColumn": 8},
+                "lil-wrapper": {"wrappingColumn": 8},
                 "editor": {"tabSize": 4}
             }}),
         )
@@ -336,7 +349,7 @@ fn direct_command_paths_match_the_original_core_requests() {
         .request(
             "workspace/executeCommand",
             json!({
-                "command": "rewrap.rewrapComment",
+                "command": "lil-wrapper.wrapComment",
                 "arguments": [{"uri": uri, "range": range}]
             }),
         )
@@ -352,13 +365,13 @@ fn direct_command_paths_match_the_original_core_requests() {
         }])
     );
 
-    let custom = execute_direct_command("rewrap.rewrapCommentAt", Some(12));
+    let custom = execute_direct_command("lil-wrapper.wrapCommentAt", Some(12));
     assert_eq!(custom["changes"][uri][0]["newText"], "one two\nthree four");
     assert_eq!(custom["changes"][uri][0]["range"]["start"]["line"], 2);
     assert_eq!(custom["changes"][uri][0]["range"]["end"]["character"], 18);
 
     let unwrap = execute_direct_command_with_text(
-        "rewrap.rewrapCommentAt",
+        "lil-wrapper.wrapCommentAt",
         Some(0),
         "first paragraph\n\none two\nthree four",
     );
@@ -396,13 +409,13 @@ fn failed_edits_save_the_original_cycle_state() {
         .notify(
             "workspace/didChangeConfiguration",
             json!({"settings": {
-                "rewrap": {"wrappingColumn": 0},
+                "lil-wrapper": {"wrappingColumn": 0},
                 "editor": {"rulers": [8, 12], "wordWrapColumn": 80}
             }}),
         )
         .expect("configure cycle rulers");
     let params = json!({
-        "command": "rewrap.rewrapComment",
+        "command": "lil-wrapper.wrapComment",
         "arguments": [{
             "uri": uri,
             "range": {
@@ -463,20 +476,20 @@ fn oracle() -> &'static Value {
 }
 
 fn settings_sections(values: &Map<String, Value>) -> (Value, Value) {
-    let mut rewrap = Map::new();
+    let mut section = Map::new();
     let mut editor = Map::new();
     for (name, value) in values {
         if let Some(name) = name.strip_prefix("rewrap.") {
             if name == "autoWrap.enabled" {
-                rewrap.insert("autoWrap".to_owned(), json!({"enabled": value}));
+                section.insert("autoWrap".to_owned(), json!({"enabled": value}));
             } else if name != "autoWrap.notification" {
-                rewrap.insert(name.to_owned(), value.clone());
+                section.insert(name.to_owned(), value.clone());
             }
         } else if let Some(name) = name.strip_prefix("editor.") {
             editor.insert(name.to_owned(), value.clone());
         }
     }
-    (Value::Object(rewrap), Value::Object(editor))
+    (Value::Object(section), Value::Object(editor))
 }
 
 fn assert_settings(actual: &Settings, expected: &Value, id: &str) {
@@ -638,7 +651,7 @@ fn rust_auto_wrap_called(id: &str) -> bool {
     server
         .notify(
             "workspace/didChangeConfiguration",
-            json!({"settings": {"rewrap": {
+            json!({"settings": {"lil-wrapper": {
                 "wrappingColumn": 8,
                 "autoWrap": {"enabled": true}
             }}}),
@@ -747,7 +760,7 @@ fn configure_auto_wrap(server: &mut LanguageServer, enabled: bool) {
     server
         .notify(
             "workspace/didChangeConfiguration",
-            json!({"settings": {"rewrap": {
+            json!({"settings": {"lil-wrapper": {
                 "wrappingColumn": 8,
                 "autoWrap": {"enabled": enabled}
             }}}),
@@ -760,7 +773,7 @@ fn toggle_auto_wrap(server: &mut LanguageServer, uri: &str) -> bool {
         .request(
             "workspace/executeCommand",
             json!({
-                "command": "rewrap.toggleAutoWrap",
+                "command": "lil-wrapper.toggleAutoWrap",
                 "arguments": [{"uri": uri}]
             }),
         )

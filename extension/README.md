@@ -7,7 +7,7 @@ programming and markup languages.
 ## Features
 
 - Format an entire document or a selected range with Zed's normal formatting command.
-- Rewrap comments and prose directly from the code-action menu.
+- Wrap comments and prose directly from the code-action menu.
 - Choose from configured columns, unwrap selected content, or cycle through your rulers.
 - Wrap complete comment blocks, not only the selected line.
 - Preserve sentence spacing, indentation, and language-specific comment markers.
@@ -34,7 +34,7 @@ Wrapper the formatter for Markdown:
   "lsp": {
     "lil-wrapper": {
       "settings": {
-        "rewrap": {
+        "lil-wrapper": {
           "wrappingColumn": 80,
           "doubleSentenceSpacing": false,
           "reformat": false,
@@ -73,7 +73,7 @@ Wrapper the formatter for Markdown:
 
 Lil Wrapper resolves its column in this order:
 
-1. A nonzero `rewrap.wrappingColumn` always wins.
+1. A nonzero `lil-wrapper.wrappingColumn` always wins.
 2. When `wrappingColumn` is `0`, configured `editor.rulers` provide the available columns.
 3. When no eligible ruler exists, `editor.wordWrapColumn` is used (80 by default).
 
@@ -85,7 +85,7 @@ cycle columns with repeated format commands:
   "lsp": {
     "lil-wrapper": {
       "settings": {
-        "rewrap": {
+        "lil-wrapper": {
           "wrappingColumn": 0
         },
         "editor": {
@@ -107,7 +107,7 @@ Auto-wrap needs both Lil Wrapper's setting and Zed's on-type formatter setting f
   "lsp": {
     "lil-wrapper": {
       "settings": {
-        "rewrap": {
+        "lil-wrapper": {
           "autoWrap": {
             "enabled": true
           }
@@ -129,14 +129,14 @@ for one open document.
 ### Add Custom Comment Markers
 
 For a language that does not have built-in comment syntax, define your delimiters under
-`rewrap.customMarkers`:
+`lil-wrapper.customMarkers`:
 
 ```json
 {
   "lsp": {
     "lil-wrapper": {
       "settings": {
-        "rewrap": {
+        "lil-wrapper": {
           "customMarkers": {
             "lineComment": "@@",
             "blockComment": ["<#", "#>"]
@@ -154,7 +154,7 @@ Leave either marker empty when it does not apply.
 
 1. Place the cursor in a comment or prose block, or select the content to change.
 2. Run Zed's `editor: format` command to use the configured column.
-3. Open the code-action menu for `Rewrap Comment / Text`, a direct `Rewrap at Column N` action,
+3. Open the code-action menu for `Lil Wrapper: Wrap Comment / Text`, a direct `Lil Wrapper: Wrap at Column N` action,
    `Unwrap Comment / Text`, or the per-document auto-wrap toggle.
 
 To bind `Alt+Q` to formatting, add this to your Zed keymap:
@@ -199,12 +199,36 @@ the workspace binary:
 The extension checks an explicit `binary.path` first, then `lil-wrapper-lsp` on the worktree
 `PATH`, then its cached or downloaded release binary.
 
+## Zed Tasks
+
+To run Lil Wrapper from the command palette with `task: spawn`, build the
+[CLI](../crates/lil-wrapper-cli/README.md) once:
+
+```sh
+cargo build -p lil-wrapper-cli
+```
+
+Then add a `.zed/tasks.json` to your project. The example below calls the workspace
+binary, so it needs no install or `PATH` entry:
+
+```json
+[
+  {
+    "label": "Lil Wrapper: wrap file",
+    "command": "target/debug/lil-wrapper-cli wrap --column 80 --write \"$ZED_FILE\"",
+    "reveal": "never"
+  }
+]
+```
+
+`task: spawn` now lists a Lil Wrapper entry that wraps the current file in place.
+
 ## Troubleshooting
 
 | Problem | Check |
 | --- | --- |
 | No wrapping occurs with `editor: format`. | Configure Lil Wrapper as the formatter for the active language. |
-| Auto-wrap does not run. | Enable both `rewrap.autoWrap.enabled` and the language's `use_on_type_format`. |
+| Auto-wrap does not run. | Enable both `lil-wrapper.autoWrap.enabled` and the language's `use_on_type_format`. |
 | Zed cannot start the server. | Build `lil-wrapper-lsp`, set `binary.path` to the local executable, or ensure it is on `PATH`. |
 | A comment style is treated as plain text. | Set a supported language mode or configure `customMarkers`. |
 

@@ -1,10 +1,10 @@
 [workspace]
-members = ["crates/lil-wrapper-core", "crates/lil-wrapper-lsp", "extension"]
+members = ["crates/lil-wrapper-core", "crates/lil-wrapper-lsp", "crates/lil-wrapper-cli", "extension"]
 resolver = "2"
 
 [workspace.package]
 edition = "2024"
-license = "Apache-2.0"
+license = "MIT"
 rust-version = "1.85"
 version = "0.1.0"
 

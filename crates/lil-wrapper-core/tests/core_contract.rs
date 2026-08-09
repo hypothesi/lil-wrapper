@@ -1,5 +1,5 @@
 use lil_wrapper_core::{
-    ColumnState, CustomMarkers, DocState, File, Position, RewrapRequest, Selection, Settings,
+    ColumnState, CustomMarkers, DocState, File, Position, Selection, Settings, WrapRequest,
     language_name_for_file, maybe_auto_wrap, str_width,
 };
 
@@ -22,8 +22,8 @@ fn file(language: &str, path: &str) -> File {
     }
 }
 
-fn request(column: usize, line: &str) -> RewrapRequest {
-    RewrapRequest {
+fn request(column: usize, line: &str) -> WrapRequest {
+    WrapRequest {
         file: file("plaintext", ""),
         settings: Settings {
             column,
@@ -147,7 +147,7 @@ fn custom_line_and_block_markers_are_used_for_unknown_languages() {
             block: (String::new(), String::new()),
         },
     };
-    let line_edit = lil_wrapper_core::rewrap(&line_request);
+    let line_edit = lil_wrapper_core::wrap(&line_request);
     assert_eq!(line_edit.lines, ["@@ one two", "@@ three", "@@ four"]);
 
     let mut block_request = request(12, "<# one two three four #>");
@@ -159,6 +159,6 @@ fn custom_line_and_block_markers_are_used_for_unknown_languages() {
             block: ("<#".to_owned(), "#>".to_owned()),
         },
     };
-    let block_edit = lil_wrapper_core::rewrap(&block_request);
+    let block_edit = lil_wrapper_core::wrap(&block_request);
     assert_eq!(block_edit.lines, ["<# one two", "three four", "#>"]);
 }

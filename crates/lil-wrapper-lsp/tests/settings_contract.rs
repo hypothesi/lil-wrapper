@@ -13,7 +13,7 @@ fn raw() -> RawSettings {
 }
 
 #[test]
-fn explicit_rewrap_column_precedes_editor_rulers_and_word_wrap_column() {
+fn explicit_lil_wrapper_column_precedes_editor_rulers_and_word_wrap_column() {
     let settings = resolve_settings(&RawSettings {
         wrapping_column: Some(45),
         rulers: vec![Ruler::Column(60)],
@@ -90,7 +90,7 @@ fn zero_or_invalid_columns_mean_unbounded_wrapping() {
 }
 
 #[test]
-fn validates_tab_width_and_preserves_other_rewrap_settings() {
+fn validates_tab_width_and_preserves_other_lil_wrapper_settings() {
     let configured = resolve_settings(&RawSettings {
         tab_width: 2.0,
         double_sentence_spacing: true,

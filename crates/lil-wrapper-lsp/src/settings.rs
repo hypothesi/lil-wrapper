@@ -112,14 +112,14 @@ impl Configuration {
     #[must_use]
     pub fn from_value(value: &Value) -> Self {
         let settings = value.get("settings").unwrap_or(value);
-        let rewrap = settings.get("rewrap").unwrap_or(settings);
+        let section = settings.get("lil-wrapper").unwrap_or(settings);
         let editor = settings.get("editor").unwrap_or(settings);
-        Self::from_sections(rewrap, editor)
+        Self::from_sections(section, editor)
     }
 
-    pub fn from_sections(rewrap: &Value, editor: &Value) -> Self {
+    pub fn from_sections(section: &Value, editor: &Value) -> Self {
         Self {
-            wrapping_column: number(rewrap.get("wrappingColumn")),
+            wrapping_column: number(section.get("wrappingColumn")),
             rulers: editor
                 .get("rulers")
                 .and_then(Value::as_array)
@@ -127,28 +127,28 @@ impl Configuration {
                 .unwrap_or_default(),
             word_wrap_column: number(editor.get("wordWrapColumn")).unwrap_or(DEFAULT_COLUMN_NUMBER),
             tab_width: number(editor.get("tabSize"))
-                .or_else(|| number(rewrap.get("tabWidth")))
+                .or_else(|| number(section.get("tabWidth")))
                 .unwrap_or(DEFAULT_TAB_WIDTH_NUMBER),
             core: CoreOptions {
-                double_sentence_spacing: rewrap
+                double_sentence_spacing: section
                     .get("doubleSentenceSpacing")
                     .and_then(Value::as_bool)
                     .unwrap_or(false),
-                reformat: rewrap
+                reformat: section
                     .get("reformat")
                     .and_then(Value::as_bool)
                     .unwrap_or(false),
-                whole_comment: rewrap
+                whole_comment: section
                     .get("wholeComment")
                     .and_then(Value::as_bool)
                     .unwrap_or(true),
             },
-            auto_wrap_enabled: rewrap
+            auto_wrap_enabled: section
                 .pointer("/autoWrap/enabled")
                 .and_then(Value::as_bool)
-                .or_else(|| rewrap.get("autoWrapEnabled").and_then(Value::as_bool))
+                .or_else(|| section.get("autoWrapEnabled").and_then(Value::as_bool))
                 .unwrap_or(false),
-            custom_markers: custom_markers(rewrap),
+            custom_markers: custom_markers(section),
         }
     }
 
@@ -229,8 +229,8 @@ fn integral_usize(number: f64) -> Option<usize> {
     format!("{number:.0}").parse().ok()
 }
 
-fn custom_markers(rewrap: &Value) -> CustomMarkers {
-    let markers = rewrap.get("customMarkers").unwrap_or(rewrap);
+fn custom_markers(section: &Value) -> CustomMarkers {
+    let markers = section.get("customMarkers").unwrap_or(section);
     let line = markers
         .get("lineComment")
         .or_else(|| markers.get("line"))

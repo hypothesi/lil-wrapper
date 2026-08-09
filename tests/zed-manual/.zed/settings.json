@@ -5,7 +5,7 @@
         "path": "../../target/debug/lil-wrapper-lsp"
       },
       "settings": {
-        "rewrap": {
+        "lil-wrapper": {
           "autoWrap": {
             "enabled": true
           },

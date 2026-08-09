@@ -5,7 +5,7 @@ schema_version = 1
 authors = ["Matt Luedke <mluedke.ds@gmail.com>"]
 description = "Wrap comments and text to a configurable column."
 repository = "https://github.com/hypothesi/lil-wrapper"
-license = "Apache-2.0"
+license = "MIT"
 
 [[capabilities]]
 kind = "download_file"

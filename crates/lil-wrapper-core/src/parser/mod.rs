@@ -5,13 +5,13 @@ mod plain;
 mod rst;
 mod sgml;
 
-use crate::RewrapRequest;
+use crate::WrapRequest;
 use crate::language::{LanguageKind, language_kind};
 use crate::model::{Block, ParsedLine};
 
 pub(crate) use markdown::parse_markdown;
 
-pub(crate) fn parse_document(request: &RewrapRequest) -> Vec<Block> {
+pub(crate) fn parse_document(request: &WrapRequest) -> Vec<Block> {
     let lines = request
         .lines
         .iter()

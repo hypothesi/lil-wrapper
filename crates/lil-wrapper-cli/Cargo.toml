@@ -1,0 +1,18 @@
+[package]
+name = "lil-wrapper-cli"
+description = "Command line interface for the Lil Wrapper text wrapping library"
+edition.workspace = true
+license.workspace = true
+publish = false
+rust-version.workspace = true
+version.workspace = true
+
+[[bin]]
+name = "lil-wrapper-cli"
+path = "src/main.rs"
+
+[lints]
+workspace = true
+
+[dependencies]
+lil-wrapper-core = { path = "../lil-wrapper-core" }

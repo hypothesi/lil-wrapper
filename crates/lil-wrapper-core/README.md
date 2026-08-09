@@ -15,15 +15,15 @@ lil-wrapper-core = { path = "../lil-wrapper/crates/lil-wrapper-core" }
 
 ## Quick Start
 
-`rewrap` works with newline-free lines and zero-based positions. Positions use UTF-16 code units,
+`wrap` works with newline-free lines and zero-based positions. Positions use UTF-16 code units,
 matching the Language Server Protocol and most editor APIs.
 
 ```rust
 use lil_wrapper_core::{
-    rewrap, CustomMarkers, File, Position, RewrapRequest, Selection, Settings,
+    wrap, CustomMarkers, File, Position, WrapRequest, Selection, Settings,
 };
 
-let request = RewrapRequest {
+let request = WrapRequest {
     file: File {
         language: "plaintext".into(),
         path: "notes.txt".into(),
@@ -49,7 +49,7 @@ let request = RewrapRequest {
     lines: vec!["one two three four".into()],
 };
 
-let edit = rewrap(&request);
+let edit = wrap(&request);
 
 assert_eq!(edit.start_line, 0);
 assert_eq!(edit.end_line, 0);
@@ -63,7 +63,7 @@ use them after it applies the text replacement.
 
 ## Input Model
 
-`RewrapRequest` deliberately contains the context the wrapper needs:
+`WrapRequest` deliberately contains the context the wrapper needs:
 
 | Field | Provide |
 | --- | --- |

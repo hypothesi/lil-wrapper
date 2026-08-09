@@ -1,7 +1,7 @@
 use regex::Regex;
 
-use crate::Settings;
 use crate::model::{Block, BlockKind, ParsedLine};
+use crate::{Settings, str_width};
 
 fn regex(pattern: &str) -> Regex {
     Regex::new(&format!("(?i){pattern}")).expect("valid static markdown regex")
@@ -11,12 +11,12 @@ fn content(line: &ParsedLine) -> &str {
     &line.content
 }
 
-fn indent_bytes(line: &ParsedLine) -> usize {
-    content(line).len() - content(line).trim_start().len()
-}
-
-fn indent_units(line: &ParsedLine) -> usize {
-    content(line)[..indent_bytes(line)].encode_utf16().count()
+fn indent_width(line: &ParsedLine) -> usize {
+    let value = content(line);
+    let end = value
+        .find(|character: char| !matches!(character, ' ' | '\t'))
+        .unwrap_or(value.len());
+    str_width(4, &value[..end])
 }
 
 fn md_match(pattern: &str, line: &ParsedLine) -> bool {
@@ -88,7 +88,7 @@ fn html_finished(line: &ParsedLine, end: &str) -> bool {
 }
 
 fn table_end(lines: &[ParsedLine], index: usize) -> Option<usize> {
-    let cells = regex(r"^ {0,3}\S.*?[^\\]\|\s*\S");
+    let cells = regex(r"^ {0,3}(?:\|.*[^\\]\||\S.*?[^\\]\|\s*\S)");
     if !cells.is_match(content(&lines[index])) {
         return None;
     }
@@ -397,10 +397,10 @@ pub(crate) fn parse_markdown(
             index += 1;
             continue;
         }
-        if indent_units(&lines[index]) >= 4 {
+        if indent_width(&lines[index]) >= 4 {
             let mut end = index + 1;
             while end < lines.len()
-                && (content(&lines[end]).trim().is_empty() || indent_units(&lines[end]) >= 4)
+                && (content(&lines[end]).trim().is_empty() || indent_width(&lines[end]) >= 4)
             {
                 end += 1;
             }
