@@ -16,8 +16,11 @@ Before the first submission, confirm all of the following:
   underscores, as used by `lil_wrapper_core` and `lil_wrapper_lsp`.
 - `extension/extension.toml` contains all required manifest fields: `id`, `name`, `version`,
   `schema_version`, `authors`, `description`, and `repository`.
-- `extension/LICENSE` is Apache-2.0. Zed accepts Apache-2.0 and requires the license in the
-  registry entry's `path`, which is `extension`, rather than only at the repository root.
+- `extension/LICENSE` is MIT. Since 2025-10-01 every extension repository must carry a license,
+  and the registry accepts Apache-2.0, BSD-2-Clause, BSD-3-Clause, CC BY 4.0, GPLv3, LGPLv3, MIT,
+  the Unlicense, and zlib. The registry reads only files whose name begins with `LICENSE` or
+  `LICENCE` inside the registry entry's `path`, which is `extension`, so a license at the
+  repository root alone does not satisfy the check.
 - The extension does not bundle the language server. `extension/src/lib.rs` locates a user-provided
   `lil-wrapper-lsp` first, then downloads an architecture-specific binary from this repository's
   GitHub release. This is the required model for language-server extensions.
@@ -26,9 +29,11 @@ Before the first submission, confirm all of the following:
 - Do not commit generated build output such as `extension/extension.wasm`; Zed packages the Rust
   extension from the source in `extension`.
 
-Zed rejects IDs and names containing `zed`, `Zed`, or `extension`; `lil-wrapper` meets this rule.
-It can also reject duplicate functionality, extensions that access the host environment outside the
-Zed Extension API, or packages that include unrelated files.
+The registry's automated checks require an ID of lowercase letters, numbers, and hyphens that does
+not contain `extension`, start with `zed-`, or end with `-zed`. They require a name that does not
+contain `extension`, start with `Zed `, or end with ` Zed`. Both `lil-wrapper` and `Lil Wrapper`
+meet these rules. Reviewers can additionally reject duplicate functionality, extensions that access
+the host environment outside the Zed Extension API, or packages that include unrelated files.
 
 ## Publish a Release
 
