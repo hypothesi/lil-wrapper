@@ -23,7 +23,16 @@ cargo clippy --workspace --all-targets -- -D warnings
 cargo fmt --all -- --check
 ```
 
-The complete compatibility suite also requires the .NET 8 SDK and Deno 2. Building the Zed
+The compatibility suite compares this implementation against the original Rewrap, so
+`cargo test --workspace` needs the upstream sources in `vendor/rewrap`. They are not committed
+here. Restore them once, at the pinned commit that the suite verifies byte-for-byte:
+
+```sh
+git clone --filter=blob:none --no-checkout https://github.com/stkb/Rewrap.git vendor/rewrap
+git -C vendor/rewrap checkout --detach 6ba6e3db36686f713e0180f1a5bbefcc9685e144
+```
+
+That suite also requires the .NET 8 SDK and Deno 2. Building the Zed
 extension requires the `wasm32-wasip2` target:
 
 ```sh
