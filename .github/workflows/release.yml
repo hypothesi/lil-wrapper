@@ -12,8 +12,8 @@ permissions:
 env:
   CARGO_TERM_COLOR: always
   RUST_TOOLCHAIN: 1.88.0
-  REWRAP_REFERENCE_REPOSITORY: https://github.com/stkb/Rewrap.git
-  REWRAP_REFERENCE_COMMIT: 6ba6e3db36686f713e0180f1a5bbefcc9685e144
+  REFERENCE_REPOSITORY: https://github.com/stkb/Rewrap.git
+  REFERENCE_COMMIT: 6ba6e3db36686f713e0180f1a5bbefcc9685e144
 
 jobs:
   verify:
@@ -42,12 +42,12 @@ jobs:
           cargo metadata --locked --no-deps --format-version 1 |
             jq --exit-status --arg version "$version" 'all(.packages[].version; . == $version)'
           test "$(awk -F '"' '/^version = / { print $2; exit }' extension/extension.toml)" = "$version"
-      - name: Restore the vendored Rewrap reference
+      - name: Restore the vendored original reference
         shell: bash
         run: |
           set -euo pipefail
-          git clone --filter=blob:none --no-checkout "$REWRAP_REFERENCE_REPOSITORY" vendor/rewrap
-          git -C vendor/rewrap checkout --detach "$REWRAP_REFERENCE_COMMIT"
+          git clone --filter=blob:none --no-checkout "$REFERENCE_REPOSITORY" vendor/rewrap
+          git -C vendor/rewrap checkout --detach "$REFERENCE_COMMIT"
       - name: Run tests
         run: cargo test --locked --workspace
       - name: Run clippy
