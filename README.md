@@ -23,9 +23,11 @@ cargo clippy --workspace --all-targets -- -D warnings
 cargo fmt --all -- --check
 ```
 
-The compatibility suite compares this implementation against the original Rewrap, so
-`cargo test --workspace` needs the upstream sources in `vendor/rewrap`. They are not committed
-here. Restore them once, at the pinned commit that the suite verifies byte-for-byte:
+The compatibility suite compares this implementation against the original one it was verified
+against, so `cargo test --workspace` needs that pinned reference in `vendor/rewrap`. It is not
+committed here, and it is third-party source under its own license; see
+[`extension/THIRD_PARTY_NOTICES.md`](extension/THIRD_PARTY_NOTICES.md) for attribution. Restore
+it once, at the commit the suite verifies byte-for-byte:
 
 ```sh
 git clone --filter=blob:none --no-checkout https://github.com/stkb/Rewrap.git vendor/rewrap

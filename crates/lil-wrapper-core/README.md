@@ -137,5 +137,5 @@ cargo clippy --package lil-wrapper-core --all-targets -- -D warnings
 cargo fmt --all -- --check
 ```
 
-The full workspace suite compares the Rust implementation against the pinned Rewrap reference.
-See the repository [compatibility contract](../../COMPATIBILITY.md) for its prerequisites and scope.
+The full workspace suite compares the Rust implementation against the pinned original reference.
+See the [root README](../../README.md) for its prerequisites.

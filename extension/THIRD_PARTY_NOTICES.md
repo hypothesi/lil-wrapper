@@ -6,12 +6,13 @@ Source: <https://github.com/stkb/Rewrap/tree/v1.16.3>
 
 Copyright 2017 Steve Baker
 
-The source repository is licensed under the Apache License, Version 2.0. This
-project's source repository retains the upstream license beside the vendored
-reference files. Those files are used by the compatibility suite and are not
-included in the Zed package or binary release archives. The shipped Rust
-implementation was written separately; its intentional differences are listed
-in the source repository's `COMPATIBILITY.md`.
+The source repository is licensed under the Apache License, Version 2.0. Its
+files are not committed to this repository and are not included in the Zed
+package or the binary release archives. The compatibility suite fetches them at
+a pinned commit, along with their upstream `LICENSE`, and uses them only as
+test fixtures and as the implementation behind a test-only .NET 8 oracle. The
+shipped Rust implementation was written separately and is verified against that
+pinned reference.
 
 ## diff_match_patch 0.3.0
 

@@ -207,5 +207,5 @@ cargo clippy --workspace --all-targets -- -D warnings
 cargo fmt --all -- --check
 ```
 
-See the repository [compatibility contract](../../COMPATIBILITY.md) for the reference corpus and
-the [root README](../../README.md) for the other components.
+See the [root README](../../README.md) for the other components and for the reference corpus the
+compatibility suite runs against.
