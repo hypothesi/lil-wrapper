@@ -51,4 +51,4 @@ workspace binary directly, so no install or `PATH` entry is needed:
 ]
 ```
 
-See the [Zed extension README](../extension/README.md) for details.
+See the [Zed extension README](../../extension/README.md) for details.
