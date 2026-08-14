@@ -1,6 +1,6 @@
 id = "lil-wrapper"
 name = "Lil Wrapper"
-version = "0.1.0"
+version = "0.1.1"
 schema_version = 1
 authors = ["Matt Luedke <mluedke.ds@gmail.com>"]
 description = "Wrap comments and text to a configurable column."
