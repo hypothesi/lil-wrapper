@@ -81,6 +81,49 @@ pub struct DocState {
     pub selections: Vec<Selection>,
 }
 
+/// A document already parsed into blocks.
+///
+/// Parsing depends only on the text, file, and settings of a request, never on its selections, so
+/// one parse serves every selection in the same document. Hold this across requests that share a
+/// document version to avoid reparsing, and pass it to [`wrap_with`].
+#[derive(Clone, Debug)]
+pub struct ParsedDocument {
+    blocks: Vec<Block>,
+    file: File,
+    settings: Settings,
+    fingerprint: u64,
+}
+
+fn fingerprint(lines: &[String]) -> u64 {
+    let mut hasher = DefaultHasher::new();
+    lines.len().hash(&mut hasher);
+    for line in lines {
+        line.hash(&mut hasher);
+    }
+    hasher.finish()
+}
+
+impl ParsedDocument {
+    /// Returns whether this parse describes the given request's document.
+    #[must_use]
+    pub fn matches(&self, request: &WrapRequest) -> bool {
+        self.file == request.file
+            && self.settings == request.settings
+            && self.fingerprint == fingerprint(&request.lines)
+    }
+}
+
+/// Parses a document so that its blocks can be reused across selections.
+#[must_use]
+pub fn parse(request: &WrapRequest) -> ParsedDocument {
+    ParsedDocument {
+        blocks: parse_document(request),
+        file: request.file.clone(),
+        settings: request.settings,
+        fingerprint: fingerprint(&request.lines),
+    }
+}
+
 /// Wrap text according to the reference behavior.
 #[must_use]
 pub fn wrap(request: &WrapRequest) -> Edit {
@@ -90,6 +133,21 @@ pub fn wrap(request: &WrapRequest) -> Edit {
 
     let blocks = parse_document(request);
     render_selected(request, &blocks)
+}
+
+/// Wrap text reusing an existing parse.
+///
+/// Reparses when `parsed` does not describe `request`, so a stale parse yields the same result as
+/// [`wrap`] rather than a wrong one.
+#[must_use]
+pub fn wrap_with(parsed: &ParsedDocument, request: &WrapRequest) -> Edit {
+    if request.lines.is_empty() {
+        return Edit::empty_with_selections(&request.selections);
+    }
+    if !parsed.matches(request) {
+        return wrap(request);
+    }
+    render_selected(request, &parsed.blocks)
 }
 
 #[must_use]
@@ -156,6 +214,9 @@ pub fn maybe_auto_wrap(request: &WrapRequest, new_text: &str, position: Position
     }];
     edit
 }
+use std::collections::hash_map::DefaultHasher;
+use std::hash::{Hash, Hasher};
+
 mod columns;
 mod language;
 mod model;
@@ -164,6 +225,7 @@ mod selections;
 mod width;
 mod wrapping;
 
+use model::Block;
 use parser::parse_document;
 use selections::render_selected;
 

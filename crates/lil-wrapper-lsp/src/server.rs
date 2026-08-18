@@ -1,7 +1,10 @@
 use crate::document::{ContentChange, Document, LspPosition, LspRange};
 use crate::remap_selections;
 use crate::settings::Configuration;
-use lil_wrapper_core::{DocState, Edit, File, Selection, WrapRequest, maybe_auto_wrap, wrap};
+use lil_wrapper_core::{
+    DocState, Edit, File, ParsedDocument, Selection, Settings, WrapRequest, maybe_auto_wrap, parse,
+    wrap_with,
+};
 use serde::Deserialize;
 use serde_json::{Map, Value, json};
 use std::collections::{HashMap, HashSet};
@@ -173,6 +176,7 @@ pub struct LanguageServer {
     auto_wrap_overrides: HashMap<String, bool>,
     column_state: ColumnTracker,
     pending_cycles: HashMap<String, PendingCycle>,
+    parsed_documents: HashMap<String, CachedParse>,
     outbound_requests: Vec<Value>,
     pending_requests: HashMap<String, PendingRequest>,
     last_apply_edit_request: Option<String>,
@@ -520,6 +524,7 @@ impl LanguageServer {
         self.document_instances.remove(uri);
         self.document_configurations.remove(uri);
         self.pending_cycles.remove(uri);
+        self.parsed_documents.remove(uri);
         self.column_state.close(uri);
         self.pending_requests.retain(|_, pending| {
             !matches!(
@@ -786,6 +791,7 @@ impl LanguageServer {
         choice: ColumnChoice,
         tab_width: Option<f64>,
     ) -> Result<Option<ProtocolTextEdit>, RpcError> {
+        let uri_owned = uri.to_owned();
         let document = self.document(uri)?.clone();
         let configuration = self.configuration_for(uri).clone();
         let selections = range.map_or_else(Vec::new, |range| {
@@ -820,7 +826,7 @@ impl LanguageServer {
             selections,
             lines: document.lines(),
         };
-        let edit = wrap(&request);
+        let edit = self.wrap_cached(&uri_owned, document.version, &request);
         if choice == ColumnChoice::Cycle {
             if let Some(protocol_edit) = edit_to_text_edit(&document, &edit) {
                 let end_line = usize::try_from(edit.end_line).map_err(|_| {
@@ -853,6 +859,35 @@ impl LanguageServer {
             self.column_state.commit(state);
         }
         Ok(edit_to_text_edit(&document, &edit))
+    }
+
+    /// Wraps using the retained parse for this document version, parsing only when it cannot be
+    /// reused. Parsing depends on the text, file, and settings but never on the selections, so
+    /// every selection in one gesture shares a single parse.
+    ///
+    /// The key below decides only whether reuse is worth attempting. Correctness rests on the
+    /// core comparing the parse against the request and reparsing when it no longer matches.
+    fn wrap_cached(&mut self, uri: &str, version: i64, request: &WrapRequest) -> Edit {
+        let reusable = self.parsed_documents.get(uri).is_some_and(|entry| {
+            entry.version == version
+                && entry.file == request.file
+                && entry.settings == request.settings
+        });
+        if reusable {
+            return wrap_with(&self.parsed_documents[uri].parsed, request);
+        }
+        let parsed = parse(request);
+        let edit = wrap_with(&parsed, request);
+        self.parsed_documents.insert(
+            uri.to_owned(),
+            CachedParse {
+                version,
+                file: request.file.clone(),
+                settings: request.settings,
+                parsed,
+            },
+        );
+        edit
     }
 
     fn workspace_edit(&self, uri: &str, edits: Vec<Value>) -> Result<Value, RpcError> {
@@ -1014,6 +1049,15 @@ enum ColumnChoice {
     Current,
     Cycle,
     Custom(usize),
+}
+
+/// A parse retained so that every selection in one document version reuses it.
+#[derive(Clone, Debug)]
+struct CachedParse {
+    version: i64,
+    file: File,
+    settings: Settings,
+    parsed: ParsedDocument,
 }
 
 /// A wrap code action, identified well enough to recompute its edit on resolve.

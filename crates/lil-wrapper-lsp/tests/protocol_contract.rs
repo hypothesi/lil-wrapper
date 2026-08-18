@@ -461,3 +461,133 @@ fn resolves_command_only_code_actions_unchanged() {
 
     assert_eq!(resolved, toggle);
 }
+
+/// The retained parse must never outlive the text it describes.
+///
+/// This fails if the parse fingerprint check in the core is removed, so it guards the mechanism
+/// that actually keeps a reused parse honest rather than the cache key that merely makes it fast.
+#[test]
+fn wraps_the_current_text_after_a_change() {
+    let mut server = LanguageServer::new();
+    initialize(&mut server);
+    let uri = "file:///tmp/project/cached.md";
+    open(&mut server, uri, "markdown", 1, "short");
+
+    // Wrap once so a parse of the short text is retained.
+    let first = server
+        .request(
+            "textDocument/rangeFormatting",
+            json!({
+                "textDocument": {"uri": uri},
+                "range": {
+                    "start": {"line": 0, "character": 0},
+                    "end": {"line": 0, "character": 5}
+                },
+                "options": {"tabSize": 4, "insertSpaces": true}
+            }),
+        )
+        .expect("first range formatting");
+    assert_eq!(
+        first.as_array().map(Vec::len),
+        Some(0),
+        "a short line needs no wrapping"
+    );
+
+    let replacement = "A replacement paragraph that is comfortably longer than the wrapping column          and therefore has to be broken across more than one line when it is wrapped.";
+    server
+        .notify(
+            "textDocument/didChange",
+            json!({
+                "textDocument": {"uri": uri, "version": 2},
+                "contentChanges": [{"text": replacement}]
+            }),
+        )
+        .expect("full document change accepted");
+
+    let second = server
+        .request(
+            "textDocument/rangeFormatting",
+            json!({
+                "textDocument": {"uri": uri},
+                "range": {
+                    "start": {"line": 0, "character": 0},
+                    "end": {"line": 0, "character": 10}
+                },
+                "options": {"tabSize": 4, "insertSpaces": true}
+            }),
+        )
+        .expect("second range formatting");
+    let edits = second.as_array().expect("edits are an array");
+    assert_eq!(edits.len(), 1, "the replaced text wraps");
+    let new_text = edits[0]["newText"].as_str().expect("edit text");
+    assert!(
+        new_text.contains('\n'),
+        "the wrapped result spans several lines: {new_text:?}"
+    );
+    assert!(
+        new_text.starts_with("A replacement paragraph"),
+        "the edit describes the current text, not the parse it replaced: {new_text:?}"
+    );
+}
+
+/// Reopening a document at a version already seen still wraps the new text.
+///
+/// Two independent mechanisms cover this — the parse is dropped when the document closes, and the
+/// core refuses a parse whose fingerprint no longer matches — so this asserts the guarantee rather
+/// than either mechanism.
+#[test]
+fn wraps_the_current_text_after_a_close_and_reopen() {
+    let mut server = LanguageServer::new();
+    initialize(&mut server);
+    let uri = "file:///tmp/project/reopened.md";
+    open(&mut server, uri, "markdown", 1, "short");
+    server
+        .request(
+            "textDocument/rangeFormatting",
+            json!({
+                "textDocument": {"uri": uri},
+                "range": {
+                    "start": {"line": 0, "character": 0},
+                    "end": {"line": 0, "character": 5}
+                },
+                "options": {"tabSize": 4, "insertSpaces": true}
+            }),
+        )
+        .expect("range formatting before close");
+    server
+        .notify(
+            "textDocument/didClose",
+            json!({"textDocument": {"uri": uri}}),
+        )
+        .expect("close accepted");
+
+    // Same version number, different text: only dropping the parse keeps this correct.
+    open(
+        &mut server,
+        uri,
+        "markdown",
+        1,
+        "A reopened paragraph that is comfortably longer than the wrapping column and so must be          broken across several lines when it is wrapped.",
+    );
+    let edits = server
+        .request(
+            "textDocument/rangeFormatting",
+            json!({
+                "textDocument": {"uri": uri},
+                "range": {
+                    "start": {"line": 0, "character": 0},
+                    "end": {"line": 0, "character": 10}
+                },
+                "options": {"tabSize": 4, "insertSpaces": true}
+            }),
+        )
+        .expect("range formatting after reopen");
+    let edits = edits.as_array().expect("edits are an array");
+    assert_eq!(edits.len(), 1, "the reopened text wraps");
+    assert!(
+        edits[0]["newText"]
+            .as_str()
+            .is_some_and(|text| text.starts_with("A reopened paragraph")),
+        "the edit describes the reopened text"
+    );
+}
