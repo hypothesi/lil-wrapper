@@ -55,7 +55,10 @@ fn advertises_every_zed_compatible_wrap_operation() {
         capabilities["documentOnTypeFormattingProvider"],
         json!({"firstTriggerCharacter": " ", "moreTriggerCharacter": ["\t", "\n"]})
     );
-    assert_eq!(capabilities["codeActionProvider"], true);
+    assert_eq!(
+        capabilities["codeActionProvider"],
+        json!({"resolveProvider": false})
+    );
     assert_eq!(
         capabilities["executeCommandProvider"]["commands"],
         json!([
@@ -340,4 +343,121 @@ fn requests_scoped_configuration_when_the_client_supports_it() {
     assert_eq!(outbound.len(), 1);
     assert_eq!(outbound[0]["method"], "workspace/configuration");
     assert_eq!(outbound[0]["params"]["items"][0]["section"], "lil-wrapper");
+}
+
+/// Initializes with a client that resolves code action edits lazily.
+fn initialize_with_resolve(server: &mut LanguageServer) -> Value {
+    server
+        .request(
+            "initialize",
+            json!({
+                "processId": null,
+                "capabilities": {
+                    "workspace": {
+                        "configuration": true,
+                        "applyEdit": true,
+                        "workspaceEdit": {"documentChanges": true}
+                    },
+                    "textDocument": {"codeAction": {
+                        "dataSupport": true,
+                        "codeActionLiteralSupport": {
+                            "codeActionKind": {"valueSet": ["refactor.rewrite"]}
+                        },
+                        "resolveSupport": {"properties": ["edit"]}
+                    }}
+                },
+                "rootUri": "file:///tmp/project"
+            }),
+        )
+        .expect("initialize response")
+}
+
+#[test]
+fn defers_code_action_edits_for_clients_that_resolve_them() {
+    let mut server = LanguageServer::new();
+    let result = initialize_with_resolve(&mut server);
+
+    assert_eq!(
+        result["capabilities"]["codeActionProvider"],
+        json!({"resolveProvider": true})
+    );
+
+    let uri = "file:///tmp/project/notes.md";
+    open(
+        &mut server,
+        uri,
+        "markdown",
+        1,
+        "A paragraph that is comfortably longer than the configured wrapping column needs wrapping.",
+    );
+    let actions = server
+        .request(
+            "textDocument/codeAction",
+            json!({
+                "textDocument": {"uri": uri},
+                "range": {
+                    "start": {"line": 0, "character": 0},
+                    "end": {"line": 0, "character": 0}
+                },
+                "context": {"diagnostics": []}
+            }),
+        )
+        .expect("code actions")
+        .as_array()
+        .expect("code actions are an array")
+        .clone();
+
+    let wrap = actions
+        .iter()
+        .find(|action| action["title"] == "Lil Wrapper: Wrap Comment / Text")
+        .expect("wrap action is offered");
+    assert!(wrap.get("edit").is_none(), "edit is deferred until resolve");
+    assert_eq!(wrap["data"]["uri"], uri);
+    assert_eq!(wrap["data"]["action"], "wrap");
+
+    let resolved = server
+        .request("codeAction/resolve", wrap.clone())
+        .expect("resolve response");
+    let edits = resolved["edit"]["documentChanges"][0]["edits"]
+        .as_array()
+        .expect("resolving produces document changes");
+    assert!(!edits.is_empty(), "resolving produces the edit");
+    assert_eq!(
+        resolved["edit"]["documentChanges"][0]["textDocument"]["uri"],
+        uri
+    );
+}
+
+#[test]
+fn resolves_command_only_code_actions_unchanged() {
+    let mut server = LanguageServer::new();
+    initialize_with_resolve(&mut server);
+    let uri = "file:///tmp/project/notes.md";
+    open(&mut server, uri, "markdown", 1, "Short line.");
+    let actions = server
+        .request(
+            "textDocument/codeAction",
+            json!({
+                "textDocument": {"uri": uri},
+                "range": {
+                    "start": {"line": 0, "character": 0},
+                    "end": {"line": 0, "character": 0}
+                },
+                "context": {"diagnostics": []}
+            }),
+        )
+        .expect("code actions");
+    let toggle = actions
+        .as_array()
+        .expect("code actions are an array")
+        .iter()
+        .find(|action| action["title"] == "Toggle Auto-Wrap for Current Document")
+        .expect("toggle action is offered")
+        .clone();
+
+    let resolved = server
+        .request("codeAction/resolve", toggle.clone())
+        .expect("resolving a command-only action succeeds");
+
+    assert_eq!(resolved, toggle);
 }

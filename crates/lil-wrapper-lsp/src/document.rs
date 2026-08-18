@@ -1,8 +1,8 @@
 use crate::{CONTENT_MODIFIED, INVALID_PARAMS, RpcError};
 use lil_wrapper_core::Position;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub(crate) struct LspPosition {
     pub line: usize,
     pub character: usize,
@@ -26,7 +26,7 @@ impl From<Position> for LspPosition {
     }
 }
 
-#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub(crate) struct LspRange {
     pub start: LspPosition,
     pub end: LspPosition,

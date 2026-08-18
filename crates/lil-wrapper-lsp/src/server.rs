@@ -46,6 +46,7 @@ enum Lifecycle {
 struct ClientCapabilities {
     workspace: WorkspaceCapabilities,
     code_action_literals: bool,
+    code_action_resolve_edit: bool,
 }
 
 #[derive(Clone, Debug, Default)]
@@ -222,6 +223,7 @@ impl LanguageServer {
             "textDocument/rangeFormatting" => self.format_range(&params),
             "textDocument/onTypeFormatting" => self.format_on_type(params),
             "textDocument/codeAction" => self.code_actions(&params),
+            "codeAction/resolve" => self.resolve_code_action(&params),
             "workspace/executeCommand" => self.execute_command(&params),
             _ => Err(RpcError::new(
                 METHOD_NOT_FOUND,
@@ -398,6 +400,15 @@ impl LanguageServer {
                     .filter_map(Value::as_str)
                     .any(|kind| code_action_kind_matches(kind, "refactor.rewrite"))
             });
+        let code_action_resolve_edit = capabilities
+            .pointer("/textDocument/codeAction/resolveSupport/properties")
+            .and_then(Value::as_array)
+            .is_some_and(|properties| {
+                properties
+                    .iter()
+                    .filter_map(Value::as_str)
+                    .any(|property| property == "edit")
+            });
         self.client_capabilities = ClientCapabilities {
             workspace: WorkspaceCapabilities {
                 configuration: capabilities
@@ -414,6 +425,7 @@ impl LanguageServer {
                     .unwrap_or(false),
             },
             code_action_literals,
+            code_action_resolve_edit,
         };
         if let Some(options) = params.initialization_options {
             self.configuration = Configuration::from_value(&options);
@@ -430,7 +442,9 @@ impl LanguageServer {
                     "firstTriggerCharacter": " ",
                     "moreTriggerCharacter": ["\t", "\n"]
                 },
-                "codeActionProvider": true,
+                "codeActionProvider": {
+                    "resolveProvider": self.client_capabilities.code_action_resolve_edit
+                },
                 "executeCommandProvider": {
                     "commands": [COMMAND_WRAP, COMMAND_WRAP_AT, COMMAND_TOGGLE_AUTO_WRAP]
                 }
@@ -600,40 +614,26 @@ impl LanguageServer {
         }
         let uri = params.text_document.uri;
         let range = params.range;
-        let wrap_edit = self.wrap(&uri, Some(range), ColumnChoice::Current, None)?;
-        let unwrap_edit = self.wrap(&uri, Some(range), ColumnChoice::Custom(0), None)?;
         let columns = self.configuration_for(&uri).columns();
-        let mut actions = vec![json!({
-            "title": "Lil Wrapper: Wrap Comment / Text",
-            "kind": "refactor.rewrite",
-            "edit": self.workspace_edit(
-                &uri,
-                wrap_edit.into_iter().map(ProtocolTextEdit::into_value).collect()
-            )?
-        })];
+        let mut actions = vec![self.wrap_action(
+            &uri,
+            range,
+            "Lil Wrapper: Wrap Comment / Text",
+            WrapAction::Current,
+        )?];
         let mut seen_columns = HashSet::new();
         for column in columns {
             if !seen_columns.insert(column) {
                 continue;
             }
-            let edit = self.wrap(&uri, Some(range), ColumnChoice::Custom(column), None)?;
-            actions.push(json!({
-                "title": format!("Lil Wrapper: Wrap at Column {column}"),
-                "kind": "refactor.rewrite",
-                "edit": self.workspace_edit(
-                    &uri,
-                    edit.into_iter().map(ProtocolTextEdit::into_value).collect()
-                )?
-            }));
-        }
-        actions.push(json!({
-            "title": "Unwrap Comment / Text",
-            "kind": "refactor.rewrite",
-            "edit": self.workspace_edit(
+            actions.push(self.wrap_action(
                 &uri,
-                unwrap_edit.into_iter().map(ProtocolTextEdit::into_value).collect()
-            )?
-        }));
+                range,
+                &format!("Lil Wrapper: Wrap at Column {column}"),
+                WrapAction::Column(column),
+            )?);
+        }
+        actions.push(self.wrap_action(&uri, range, "Unwrap Comment / Text", WrapAction::Unwrap)?);
         actions.push(json!({
             "title": "Toggle Auto-Wrap for Current Document",
             "kind": "refactor.rewrite",
@@ -644,6 +644,66 @@ impl LanguageServer {
             }
         }));
         Ok(Value::Array(actions))
+    }
+
+    /// Builds one wrap code action, deferring its edit when the client resolves edits.
+    fn wrap_action(
+        &mut self,
+        uri: &str,
+        range: LspRange,
+        title: &str,
+        action: WrapAction,
+    ) -> Result<Value, RpcError> {
+        let mut data = json!({"uri": uri, "range": range, "action": action.tag()});
+        if let WrapAction::Column(column) = action {
+            data["column"] = json!(column);
+        }
+        let mut value = json!({
+            "title": title,
+            "kind": "refactor.rewrite",
+            "data": data
+        });
+        if !self.client_capabilities.code_action_resolve_edit {
+            value["edit"] = self.wrap_action_edit(uri, range, action)?;
+        }
+        Ok(value)
+    }
+
+    /// Computes the workspace edit for a wrap code action.
+    fn wrap_action_edit(
+        &mut self,
+        uri: &str,
+        range: LspRange,
+        action: WrapAction,
+    ) -> Result<Value, RpcError> {
+        let edit = self.wrap(uri, Some(range), action.column_choice(), None)?;
+        self.workspace_edit(
+            uri,
+            edit.into_iter().map(ProtocolTextEdit::into_value).collect(),
+        )
+    }
+
+    fn resolve_code_action(&mut self, params: &Value) -> Result<Value, RpcError> {
+        let mut action = params.clone();
+        if action.get("edit").is_some() {
+            return Ok(action);
+        }
+        // Command-only actions carry no data and have nothing to resolve.
+        let Some(data) = action.get("data").cloned() else {
+            return Ok(action);
+        };
+        let uri = data
+            .get("uri")
+            .and_then(Value::as_str)
+            .ok_or_else(|| RpcError::new(INVALID_PARAMS, "code action data is missing uri"))?
+            .to_owned();
+        let range: LspRange =
+            parse_value(data.get("range").cloned().ok_or_else(|| {
+                RpcError::new(INVALID_PARAMS, "code action data is missing range")
+            })?)?;
+        let wrap_action = WrapAction::from_data(&data)?;
+        action["edit"] = self.wrap_action_edit(&uri, range, wrap_action)?;
+        Ok(action)
     }
 
     fn execute_command(&mut self, params: &Value) -> Result<Value, RpcError> {
@@ -954,6 +1014,57 @@ enum ColumnChoice {
     Current,
     Cycle,
     Custom(usize),
+}
+
+/// A wrap code action, identified well enough to recompute its edit on resolve.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum WrapAction {
+    Current,
+    Column(usize),
+    Unwrap,
+}
+
+impl WrapAction {
+    fn tag(self) -> &'static str {
+        match self {
+            Self::Current => "wrap",
+            Self::Column(_) => "column",
+            Self::Unwrap => "unwrap",
+        }
+    }
+
+    fn column_choice(self) -> ColumnChoice {
+        match self {
+            Self::Current => ColumnChoice::Current,
+            Self::Column(column) => ColumnChoice::Custom(column),
+            Self::Unwrap => ColumnChoice::Custom(0),
+        }
+    }
+
+    fn from_data(data: &Value) -> Result<Self, RpcError> {
+        let tag = data
+            .get("action")
+            .and_then(Value::as_str)
+            .ok_or_else(|| RpcError::new(INVALID_PARAMS, "code action data is missing action"))?;
+        match tag {
+            "wrap" => Ok(Self::Current),
+            "unwrap" => Ok(Self::Unwrap),
+            "column" => {
+                let column = data
+                    .get("column")
+                    .and_then(Value::as_u64)
+                    .and_then(|column| usize::try_from(column).ok())
+                    .ok_or_else(|| {
+                        RpcError::new(INVALID_PARAMS, "code action data has an invalid column")
+                    })?;
+                Ok(Self::Column(column))
+            }
+            other => Err(RpcError::new(
+                INVALID_PARAMS,
+                format!("unknown code action: {other}"),
+            )),
+        }
+    }
 }
 
 struct CommandTarget {
